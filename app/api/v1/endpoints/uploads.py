@@ -17,15 +17,13 @@ router = APIRouter()
     summary="Upload Media"
 )
 async def upload_media(
-        file: UploadFile = File(...),  # Nhận file ảnh thực tế
-        media_type: MediaType = Form(...),  # Nhận loại (avatar/post/story) từ form
+        file: UploadFile = File(...),
+        media_type: MediaType = Form(...),
         service: UploadService = Depends(get_upload_services),
         user: dict = Depends(get_current_user)
 ):
-    # Xác định folder dựa trên media_type (ví dụ: "posts")
     folder = f"{media_type}s"
 
-    # Gọi hàm upload của service (hàm này đã bao gồm việc lưu vào Repo)
     result = await service.upload(
         file=file,
         folder=folder,

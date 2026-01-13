@@ -51,22 +51,8 @@ class MediaCreate(BaseModel):
 # Trả về cho frontend ==================================================================================================
 class MediaResponse(BaseModel):
     id: ObjectIdStr = Field(..., alias="_id")
-    owner_id: ObjectIdStr = Field(..., description="ID của chủ sở hữu")
-    owner_type: OwnerType = Field(..., description="Loại chủ sở hữu")
     type: MediaType = Field(..., description="Loại media")
-
-    public_id: str = Field(..., description="Cloudinary public_id")
     url: str = Field(..., description="URL gốc của ảnh")
-
-    width: int = Field(..., gt=0, description="Chiều rộng ảnh")
-    height: int = Field(..., gt=0, description="Chiều cao ảnh")
-    format: Optional[str] = Field(None, description="jpg, png, webp...")
-    bytes: Optional[int] = Field(None, description="Kích thước file (bytes)")
-
-    privacy: PrivacyType = Field(default=PrivacyType.PUBLIC)
-
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # Update ===============================================================================================================

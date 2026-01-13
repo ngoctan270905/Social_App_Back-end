@@ -52,10 +52,10 @@ class UploadService:
                 cloudinary.uploader.upload,
                 file_content,
                 folder=f"blog_facebook/{folder}",
-                resource_type="image",  # Chỉ định rõ là image
+                resource_type="image",
                 transformation=[
                     {"quality": "auto", "fetch_format": "auto"},
-                    {"width": 2000, "height": 2000, "crop": "limit"}  # Giới hạn kích thước max
+                    {"width": 2000, "height": 2000, "crop": "limit"}
                 ],
                 allowed_formats=["jpg", "png", "webp"],
             )
