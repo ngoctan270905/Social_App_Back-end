@@ -1,0 +1,38 @@
+# Byte-compiled / Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+
+# Logs
+*.log
+
+# Migrations nếu muốn local riêng (tùy project)
+# alembic/versions/*.pyc
+
+# VSCode / IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Pytest cache
+.pytest_cache/
+cache/
+
+# MacOS
+.DS_Store
+
+# MySQL dump hoặc SQLite file tạm
+*.db
+*.sqlite3
+
+# Coverage report
+htmlcov/
+.coverage
+
+# Docker
+*.env.dev

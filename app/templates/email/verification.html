@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận tài khoản</title>
+</head>
+<body style="font-family: Helvetica, Arial, sans-serif; line-height: 1.5; color: #1c1e21; background-color: #f0f2f5; margin: 0; padding: 20px;">
+
+    <div style="max-width: 580px; margin: 0 auto; background-color: #ffffff; padding: 20px 40px; border-radius: 8px; border: 1px solid #ddd;">
+
+        <h2 style="font-size: 24px; font-weight: 600; margin-bottom: 20px; color: #1c1e21;">
+            Thêm một bước nữa để đăng ký
+        </h2>
+
+        <p style="font-size: 17px; margin: 0 0 15px 0;">Xin chào {{ name }},</p>
+
+        <p style="font-size: 17px; margin: 0 0 20px 0;">
+            Chúng tôi đã nhận được yêu cầu tạo tài khoản của bạn. Đây là mã xác nhận của bạn:
+        </p>
+
+        <div style="margin: 30px 0 10px 0; text-align: center;">
+            <div style="display: inline-block; border: 1px solid #1877f2; border-radius: 6px; padding: 15px 40px; font-size: 24px; font-weight: 700; color: #1c1e21; letter-spacing: 5px; background-color: #e7f3ff;">
+                {{ otp_code }}
+            </div>
+        </div>
+
+        <p style="text-align: center; color: #65676b; font-size: 14px; margin-bottom: 40px;">
+            Không chia sẻ mã này với bất kỳ ai.
+        </p>
+
+        <div style="margin-bottom: 30px;">
+            <p style="font-size: 17px; margin: 0 0 5px 0;"><strong>Nếu có người yêu cầu mã này</strong></p>
+            <p style="font-size: 16px; margin: 0; color: #1c1e21;">
+                Đừng chia sẻ mã này với bất kỳ ai, đặc biệt với người nói là họ làm việc cho {{ project_name }} hoặc Meta.
+            </p>
+        </div>
+
+        <div style="margin-top: 30px; font-size: 16px; color: #1c1e21;">
+            <p style="margin: 0;">Trân trọng cảm ơn!</p>
+            <p style="margin: 5px 0 0 0;">Đội ngũ bảo mật của {{ project_name }}</p>
+        </div>
+
+        <div style="margin-top: 50px; font-size: 12px; color: #8a8d91; border-top: 1px solid #ddd; padding-top: 20px;">
+            <p style="margin-bottom: 5px;">
+                Bạn muốn biết email này có đúng là do chúng tôi gửi không? Hãy truy cập vào Trung tâm trợ giúp để xác nhận:
+            </p>
+            <a href="https://www.facebook.com/help/check-email" style="color: #1877f2; text-decoration: none;">www.facebook.com/help/check-email</a>
+
+            <div style="margin-top: 20px; font-size: 11px; color: #b0b3b8;">
+                <p>Meta Platforms, Inc., 1601 Willow Road, Menlo Park, CA 94025</p>
+                <p>Email này được gửi đến {{ email_to }}.</p>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
