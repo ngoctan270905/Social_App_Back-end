@@ -50,7 +50,7 @@ class MediaCreate(BaseModel):
 
 # Trả về cho frontend ==================================================================================================
 class MediaResponse(BaseModel):
-    id: ObjectIdStr = Field(..., alias="_id")
+    id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
     type: MediaType = Field(..., description="Loại media")
     url: str = Field(..., description="URL gốc của ảnh")
 

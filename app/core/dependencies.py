@@ -3,9 +3,9 @@ from fastapi import Depends, HTTPException, status
 import redis.asyncio as redis
 
 from app.exceptions.auth import Ban, XacMinhEmail
+from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
-from app.repositories.upload_repository import UploadRepository
 from app.core.security import verify_scoped_token
 from fastapi.security import OAuth2PasswordBearer
 from typing import Dict, Any, Optional
@@ -19,7 +19,7 @@ async def get_current_user(
 ) -> Dict[str, Any]:
     user_repo = UserRepository()
     user_profile_repo = UserProfileRepository()
-    upload_repo = UploadRepository()
+    media_repo = MediaRepository()
 
     try:
         # Xác minh token để lấy user_id
@@ -58,7 +58,7 @@ async def get_current_user(
 
     avatar_url = None
     if profile and profile.get("avatar"):
-        media = await upload_repo.get_by_id(profile["avatar"])
+        media = await media_repo.get_by_id(profile["avatar"])
         if media:
             avatar_url = media.get("url")
 

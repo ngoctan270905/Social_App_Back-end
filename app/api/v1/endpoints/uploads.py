@@ -3,10 +3,10 @@ from fastapi import APIRouter, Depends, status, UploadFile, File, Form
 
 from app.schemas.media import MediaResponse, MediaCreate, MediaType
 from app.schemas.response import ResponseModel
-from app.services.upload_service import UploadService
+from app.services.media_service import MediaService
 from app.services.user_service import UserService
 from app.core.dependencies import get_current_user
-from app.api.deps import get_user_service, get_upload_services
+from app.api.deps import get_user_service, get_media_services
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ router = APIRouter()
 async def upload_media(
         file: UploadFile = File(...),
         media_type: MediaType = Form(...),
-        service: UploadService = Depends(get_upload_services),
+        service: MediaService = Depends(get_media_services),
         user: dict = Depends(get_current_user)
 ):
     folder = f"{media_type}s"

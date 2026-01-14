@@ -4,7 +4,7 @@ from bson import ObjectId
 from app.core.mongo_database import mongodb_client
 
 
-class UploadRepository:
+class MediaRepository:
     def __init__(self):
         self.db = mongodb_client.get_database()
         self.collection = self.db.get_collection("media")

@@ -3,7 +3,7 @@ from fastapi import Depends
 from app.repositories.author_repository import AuthorRepository
 from app.repositories.book_repository import BookRepository
 from app.repositories.news_repository import NewRepository
-from app.repositories.upload_repository import UploadRepository
+from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.token_repository import TokenRepository
@@ -11,17 +11,19 @@ from app.repositories.category_repository import CategoryRepository
 from app.services.auth_service import AuthService
 from app.services.author_service import AuthorService
 from app.services.book_service import BookService
+from app.services.media_service import MediaService
 from app.services.news_service import NewsService
 from app.services.notification_service import NotificationService
 from app.services.upload_service import UploadService
+from app.services.user_profile_service import UserProfileService
 from app.services.user_service import UserService
 from app.services.token_service import TokenService
 from app.services.category_service import CategoryService
 from app.core.redis_client import get_redis_client
 import redis.asyncio as redis
 
-def get_upload_repository() -> UploadRepository:
-    return  UploadRepository()
+def get_media_repository() -> MediaRepository:
+    return  MediaRepository()
 
 def get_news_repository() -> NewRepository:
     return NewRepository()
@@ -103,7 +105,15 @@ def get_news_service() -> NewsService:
 def get_notification_service() -> NotificationService:
     return NotificationService()
 
-def get_upload_services() -> UploadService:
-    upload_repo = get_upload_repository()
+def get_upload_service() -> UploadService:
     user_profile_repo = get_user_profile_repository()
-    return UploadService(upload_repo=upload_repo, user_profile_repo=user_profile_repo)
+    return UploadService(user_profile_repo)
+
+def get_media_services() -> MediaService:
+    upload_service = get_upload_service()
+    media_repo = get_media_repository()
+    return MediaService(upload_service, media_repo=media_repo)
+
+def get_user_profile_service() -> UserProfileService:
+    user_profile_repo = get_user_profile_repository()
+    return UserProfileService(user_profile_repo)

@@ -18,9 +18,14 @@ class UserProfileRepository:
         profile = await self.collection.find_one({"user_id": ObjectId(user_id)})
         return profile
 
-    async def update_by_user_id(self, user_id: str, data: dict):
-        return await self.collection.update_one(
-            {"user_id": ObjectId(user_id)},
-            {"$set": data}
-        )
 
+    async def update_by_user_id(self, user_id: str, media_id: str) -> Dict[str, Any]:
+        update =  await self.collection.update_one(
+            {"user_id": ObjectId(user_id)},
+            {"$set":{"avatar": ObjectId(media_id)} }
+        )
+        user_profile = await self.collection.find_one(
+            {"user_id": ObjectId(user_id)}
+        )
+        print(user_profile)
+        return user_profile

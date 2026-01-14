@@ -4,7 +4,18 @@ from typing import Optional, List
 from datetime import datetime
 from .utils import ObjectIdStr
 
+class PostType(str, Enum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    FRIENDS = "friends"
+
+
 # ============================================================================================
+class PostCreate(BaseModel):
+    content: str
+    media_ids: Optional[ObjectIdStr] = None
+    privacy: PostType
+
 class NewsCreate(BaseModel):
     title: str
     content: str
@@ -14,7 +25,6 @@ class NewsCreateResponse(BaseModel):
     title: str
     content: str
     created_at: Optional[datetime] = None
-
 
 # =================================================================================================
 class NewsListResponse(BaseModel):
