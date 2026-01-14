@@ -8,8 +8,8 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 
 api_router.include_router(
     news.router,
-    prefix="/news",
-    tags=["News"]
+    prefix="/posts",
+    tags=["Posts"]
 )
 
 api_router.include_router(

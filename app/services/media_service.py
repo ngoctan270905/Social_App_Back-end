@@ -7,11 +7,8 @@ from fastapi import HTTPException, status, FastAPI, UploadFile
 
 from app.core.websocket import manager
 from app.repositories.media_repository import MediaRepository
-from app.repositories.news_repository import NewRepository
 from typing import List, Optional
-
 from app.schemas.media import MediaResponse
-from app.schemas.news import NewsListResponse, NewsCreate, NewsCreateResponse
 from app.services.upload_service import UploadService
 
 

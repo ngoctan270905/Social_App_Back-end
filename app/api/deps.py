@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Depends
 from app.repositories.author_repository import AuthorRepository
 from app.repositories.book_repository import BookRepository
-from app.repositories.news_repository import NewRepository
+from app.repositories.news_repository import PostRepository
 from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
@@ -12,7 +12,7 @@ from app.services.auth_service import AuthService
 from app.services.author_service import AuthorService
 from app.services.book_service import BookService
 from app.services.media_service import MediaService
-from app.services.news_service import NewsService
+from app.services.news_service import PostService
 from app.services.notification_service import NotificationService
 from app.services.upload_service import UploadService
 from app.services.user_profile_service import UserProfileService
@@ -25,8 +25,8 @@ import redis.asyncio as redis
 def get_media_repository() -> MediaRepository:
     return  MediaRepository()
 
-def get_news_repository() -> NewRepository:
-    return NewRepository()
+def get_post_repository() -> PostRepository:
+    return PostRepository()
 
 def get_user_profile_repository() -> UserProfileRepository:
     return UserProfileRepository()
@@ -98,9 +98,9 @@ def get_book_service() -> BookService:
     return BookService(book_repo=book_repo, category_repo=category_repo, author_repo=author_repo)
 
 
-def get_news_service() -> NewsService:
-    news_repo = get_news_repository()
-    return NewsService(news_repo=news_repo)
+def get_post_service() -> PostService:
+    post_repo = get_post_repository()
+    return PostService(post_repo=post_repo)
 
 def get_notification_service() -> NotificationService:
     return NotificationService()

@@ -12,18 +12,19 @@ class PostType(str, Enum):
 
 # ============================================================================================
 class PostCreate(BaseModel):
-    content: str
-    media_ids: Optional[ObjectIdStr] = None
+    content: str = Field(..., min_length=1, max_length=5000)
+    media_ids: Optional[List[str]] = Field(default=None)
     privacy: PostType
 
 class NewsCreate(BaseModel):
     title: str
     content: str
 
-class NewsCreateResponse(BaseModel):
+class PostCreateResponse(BaseModel):
     id: Optional[ObjectIdStr] = Field(default=None, alias="_id", serialization_alias="id")
-    title: str
-    content: str
+    content: str = Field(..., min_length=1, max_length=5000)
+    media_ids: Optional[List[str]] = Field(default=None)
+    privacy: PostType
     created_at: Optional[datetime] = None
 
 # =================================================================================================

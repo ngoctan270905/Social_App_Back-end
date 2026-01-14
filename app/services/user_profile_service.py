@@ -1,14 +1,9 @@
 import datetime
 from datetime import datetime
 from fastapi import HTTPException, status
-from sqlalchemy.testing.pickleable import User
-
 from app.core.websocket import manager
-from app.repositories.news_repository import NewRepository
 from typing import List, Optional
-
 from app.repositories.user_profile_repository import UserProfileRepository
-from app.schemas.news import NewsListResponse, NewsCreate, NewsCreateResponse
 from app.schemas.user_profile import UpdateProfileAvatar
 
 
