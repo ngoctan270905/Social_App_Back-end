@@ -29,3 +29,17 @@ class UserProfileRepository:
         )
         print(user_profile)
         return user_profile
+
+    async def update_avatar(
+            self,
+            user_id: str,
+            avatar_id: ObjectId
+    ) -> Dict[str, Any]:
+        await self.collection.update_one(
+            {"user_id": ObjectId(user_id)},
+            {"$set": {"avatar": avatar_id}}
+        )
+
+        return await self.collection.find_one(
+            {"user_id": ObjectId(user_id)}
+        )

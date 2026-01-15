@@ -19,9 +19,9 @@ router = APIRouter()
     summary="Upload Avatar",
 )
 async def upload_avatar(
-        media_id: str,
+        file: UploadFile = File(...),
         service: UserProfileService = Depends(get_user_profile_service),
         user: dict = Depends(get_current_user)
 ):
-    updated_avatar = await service.update_profile(media_id, user_id=user['_id'])
+    updated_avatar = await service.update_profile_avatar(file=file, user_id=user['_id'])
     return ResponseModel(data=updated_avatar, message="OK")

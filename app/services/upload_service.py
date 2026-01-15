@@ -16,55 +16,87 @@ class UploadService:
         self.user_profile_repo = user_profile_repo
 
     # Giới hạn file type và size
-    ALLOWED_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/webp"}
-    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/jpg", "image/webp"}
+    ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm"}
 
-    async def upload_image(self, file: UploadFile, folder: str, media_type: str):
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024
+    MAX_VIDEO_SIZE = 100 * 1024 * 1024
+
+
+    async def upload_media(
+            self,
+            file: UploadFile,
+            folder: str,
+    ):
         try:
-            # 1. VALIDATE FILE TYPE
-            if file.content_type not in UploadService.ALLOWED_TYPES:
+            content_type = file.content_type
+
+            # Detect media type
+            if content_type in self.ALLOWED_IMAGE_TYPES:
+                media_type = "image"
+                max_size = self.MAX_IMAGE_SIZE
+                resource_type = "image"
+
+            elif content_type in self.ALLOWED_VIDEO_TYPES:
+                media_type = "video"
+                max_size = self.MAX_VIDEO_SIZE
+                resource_type = "video"
+
+            else:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"File type không hợp lệ. Chỉ chấp nhận: {', '.join(UploadService.ALLOWED_TYPES)}"
+                    detail="File không hợp lệ (chỉ hỗ trợ image hoặc video)"
                 )
 
-            # 2. VALIDATE FILE SIZE
+            # Read file
             file_content = await file.read()
-            if len(file_content) > UploadService.MAX_FILE_SIZE:
+
+            if len(file_content) > max_size:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"File quá lớn. Tối đa {UploadService.MAX_FILE_SIZE / 1024 / 1024}MB"
+                    detail=f"File quá lớn. Tối đa {max_size / 1024 / 1024}MB"
                 )
 
-            # 3. VALIDATE FILE CONTENT (kiểm tra có phải ảnh thật không)
-            # Đọc magic bytes để chắc chắn là ảnh
-            if not file_content.startswith(b'\xff\xd8\xff') and \
-                    not file_content.startswith(b'\x89PNG') and \
-                    not file_content.startswith(b'RIFF'):
-                raise HTTPException(status_code=400, detail="File không phải ảnh hợp lệ")
+            # Validate image magic bytes
+            if media_type == "image":
+                if not (
+                        file_content.startswith(b'\xff\xd8\xff') or
+                        file_content.startswith(b'\x89PNG') or
+                        file_content.startswith(b'RIFF')
+                ):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="File không phải ảnh hợp lệ"
+                    )
 
-            # 4. UPLOAD với nhiều options
+            # Upload Cloudinary
             upload_result = await run_in_threadpool(
                 cloudinary.uploader.upload,
                 file_content,
                 folder=f"blog_facebook/{folder}",
-                resource_type="image",
-                transformation=[
-                    {"quality": "auto", "fetch_format": "auto"},
-                    {"width": 2000, "height": 2000, "crop": "limit"}
-                ],
-                allowed_formats=["jpg", "png", "webp"],
+                resource_type=resource_type,
+                transformation=(
+                    [
+                        {"quality": "auto", "fetch_format": "auto"},
+                        {"width": 2000, "height": 2000, "crop": "limit"}
+                    ] if media_type == "image" else None
+                ),
+                allowed_formats=(
+                    ["jpg", "png", "webp"]
+                    if media_type == "image"
+                    else ["mp4", "mov", "webm"]
+                )
             )
 
             return {
                 "type": media_type,
                 "public_id": upload_result.get("public_id"),
                 "url": upload_result.get("secure_url"),
+                "format": upload_result.get("format"),
+                "bytes": upload_result.get("bytes"),
                 "width": upload_result.get("width"),
                 "height": upload_result.get("height"),
-                "format": upload_result.get("format"),  # webp, jpg, png
-                "bytes": upload_result.get("bytes"),  # Kích thước file
-                "privacy": "public"
+                "duration": upload_result.get("duration"),
             }
 
         except HTTPException:
@@ -72,9 +104,13 @@ class UploadService:
 
         except Exception as e:
             logger.error(f"Cloudinary upload error: {str(e)}")
-            raise HTTPException(status_code=500, detail="Lỗi upload ảnh lên server lưu trữ")
+            raise HTTPException(
+                status_code=500,
+                detail="Lỗi upload media lên server"
+            )
 
         finally:
             await file.close()
+
 
 

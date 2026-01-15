@@ -6,11 +6,9 @@ from .utils import ObjectIdStr
 
 
 class MediaType(str, Enum):
-    AVATAR = "avatar"
-    COVER = "cover"
-    POST = "post"
-    COMMENT = "comment"
-    STORY = "story"
+    IMAGE = "image"
+    VIDEO = "video"
+
 
 
 class OwnerType(str, Enum):

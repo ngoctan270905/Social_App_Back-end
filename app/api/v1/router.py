@@ -18,12 +18,6 @@ api_router.include_router(
     tags=["Profiles"]
 )
 
-api_router.include_router(
-    uploads.router,
-    prefix="/uploads",
-    tags=["Uploads"]
-)
-
 # ===== Auth routes =====
 api_router.include_router(
     auth.router,

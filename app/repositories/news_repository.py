@@ -9,11 +9,12 @@ class PostRepository:
         self.db = mongodb_client.get_database()
         self.collection = self.db.get_collection("posts")
 
-    async def get_all_news(self) -> List[Dict[str, Any]]:
-        news = []
-        async for new in self.collection.find({"deleted_at": None}):
-            news.append(new)
-        return news
+    async def get_all_posts(self) -> List[Dict[str, Any]]:
+        posts = []
+        cursor = self.collection.find({"privacy": "public"})
+        async for post in cursor:
+            posts.append(post)
+        return posts
 
 
     async def create(self, post_data: Dict[str, Any]) -> Dict[str, Any]:

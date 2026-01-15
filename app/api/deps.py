@@ -100,7 +100,8 @@ def get_book_service() -> BookService:
 
 def get_post_service() -> PostService:
     post_repo = get_post_repository()
-    return PostService(post_repo=post_repo)
+    media_service = get_media_services()
+    return PostService(post_repo=post_repo,media_service=media_service)
 
 def get_notification_service() -> NotificationService:
     return NotificationService()
@@ -116,4 +117,6 @@ def get_media_services() -> MediaService:
 
 def get_user_profile_service() -> UserProfileService:
     user_profile_repo = get_user_profile_repository()
-    return UserProfileService(user_profile_repo)
+    upload_service = get_upload_service()
+    media_repo = get_media_repository()
+    return UserProfileService(user_profile_repo, upload_service, media_repo=media_repo)
