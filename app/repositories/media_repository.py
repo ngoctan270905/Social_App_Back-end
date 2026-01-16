@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Set
 from bson import ObjectId
 from app.core.mongo_database import mongodb_client
 
@@ -16,3 +16,15 @@ class MediaRepository:
 
     async def get_by_id(self, media_id: ObjectId) -> Optional[Dict[str, Any]]:
         return await self.collection.find_one({"_id": media_id})
+
+    async def get_by_ids(self, media_ids: set[ObjectId]) -> List[Dict[str, Any]]:
+        print(f"đi vào đây")
+        print(f"truyền vào media_ids: {media_ids}")
+        cursor = self.collection.find({"_id": {"$in": list(media_ids)}})
+
+        medias = []
+        async for media in cursor:
+            medias.append(media)
+        print(f"Danh sasch media_ids: {medias}")
+
+        return medias

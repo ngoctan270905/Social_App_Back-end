@@ -18,6 +18,17 @@ class UserProfileRepository:
         profile = await self.collection.find_one({"user_id": ObjectId(user_id)})
         return profile
 
+    async def get_public_by_ids(self, user_ids: set[ObjectId]) ->  list[Dict[str, Any]]:
+        cursor = self.collection.find({"user_id": {"$in": list(user_ids)}})
+
+        users = []
+        async for user in cursor:
+            users.append(user)
+
+        print(f"Test: {users}")
+
+        return users
+
 
     async def update_by_user_id(self, user_id: str, media_id: str) -> Dict[str, Any]:
         update =  await self.collection.update_one(
