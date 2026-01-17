@@ -9,12 +9,27 @@ class PostRepository:
         self.db = mongodb_client.get_database()
         self.collection = self.db.get_collection("posts")
 
-    async def get_all_posts(self) -> List[Dict[str, Any]]:
+    async def get_all_posts(
+            self,
+            cursor: Optional[str] = None,  # ← Thêm cursor param
+            limit: int = 10  # ← Thêm limit param
+    ) -> List[Dict[str, Any]]:
+
+        # 1. Tạo query filter
+        query: Dict[str, Any] = {"privacy": "public"}
+
+        # 2. Nếu có cursor → lấy bài CŨ HƠN cursor đó
+        if cursor:
+            query["_id"] = {"$lt": ObjectId(cursor)}  # _id < cursor
+
+        db_cursor = self.collection.find(query).sort("_id", -1).limit(limit)
+
         posts = []
-        cursor = self.collection.find({"privacy": "public"})
-        async for post in cursor:
+        async for post in db_cursor:
             posts.append(post)
+
         return posts
+
 
 
     async def create(self, post_data: Dict[str, Any]) -> Dict[str, Any]:

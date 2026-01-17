@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Form, Query
 from typing import List, Optional
 
 from app.core.dependencies import get_current_user
 from app.schemas.response import ResponseModel
 from app.services.news_service import PostService
-from app.schemas.news import PostCreateResponse, NewsCreate, PostCreate, PostType, PostsListResponse
+from app.schemas.news import PostCreateResponse, NewsCreate, PostCreate, PostType, PostsListResponse, \
+    PaginatedPostsResponse
 from app.api.deps import get_post_service
 
 router = APIRouter()
@@ -12,12 +13,15 @@ router = APIRouter()
 
 @router.get(
     "/",
-    response_model=ResponseModel[List[PostsListResponse]],
+    response_model=PaginatedPostsResponse,
     summary="Lấy danh sách bài viết"
 )
-async def get_news(service: PostService = Depends(get_post_service)):
-    posts = await service.get_all_posts()
-    return ResponseModel(data=posts, message="Lấy danh sách bảng tin thành công")
+async def get_news(
+        cursor: Optional[str] = None,
+    limit: int = Query(default=10, le=50),
+                    service: PostService = Depends(get_post_service)):
+    posts = await service.get_all_posts(cursor=cursor, limit=limit)
+    return posts
 
 
 @router.post(

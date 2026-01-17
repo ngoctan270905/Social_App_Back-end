@@ -6,8 +6,7 @@ from fastapi import FastAPI
 # from app.core.database import dispose_db
 from app.core.redis_client import get_redis_pool, close_redis_pool
 from .mongo_database import mongodb_client
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 @asynccontextmanager

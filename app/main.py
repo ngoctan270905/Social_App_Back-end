@@ -13,14 +13,9 @@ from app.api.v1.endpoints.websockets import router as ws_router
 import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
+from app.core.logging import setup_logging
 
-
-logging.basicConfig(
-    level=logging.INFO if settings.ENVIRONMENT == "development" else logging.WARNING,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-logger = logging.getLogger(__name__)
+setup_logging()
 
 app = FastAPI(title="Library API", lifespan=lifespan)
 

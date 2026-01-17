@@ -53,7 +53,6 @@ class MediaService:
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
-        print(f"Metadata: {media_data}")
 
         # Save DB
         try:

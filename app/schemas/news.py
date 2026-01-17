@@ -38,20 +38,29 @@ class PostCreateResponse(BaseModel):
 # Schema trả về danh sách bài viết =====================================================================================
 class UserPublic(BaseModel):
     id: ObjectIdStr
-    username: str
-    avatar: Optional[str]
+    display_name: str
+    avatar: Optional[str] = None
 
-
-# class PostsListResponse(BaseModel):
-#     id: Optional[ObjectIdStr] = Field(default=None, alias="_id", serialization_alias="id")
-#     content: str
-#     media: Optional[list[MediaPublic]] = None
-#     author: UserPublic
-#     privacy: PostType
-#     created_at: datetime
 
 class PostsListResponse(BaseModel):
     id: Optional[ObjectIdStr] = Field(default=None, alias="_id", serialization_alias="id")
     content: str
+    media: Optional[list[MediaPublic]] = None
+    author: Optional[UserPublic] = None
     privacy: PostType
     created_at: datetime
+
+# class PostsListResponse(BaseModel):
+#     id: Optional[ObjectIdStr] = Field(default=None, alias="_id", serialization_alias="id")
+#     content: str
+#     privacy: PostType
+#     created_at: datetime
+
+class PaginationInfo(BaseModel):
+    next_cursor: Optional[str]
+    has_more: bool
+    limit: int
+
+class PaginatedPostsResponse(BaseModel):
+    data: List[PostsListResponse]
+    pagination: PaginationInfo
