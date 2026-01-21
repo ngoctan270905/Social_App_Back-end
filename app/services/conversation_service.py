@@ -1,28 +1,25 @@
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from app.repositories.conversation_repository import ConversationRepository
-from app.services.participant_service import ParticipantService
 
 class ConversationService:
     def __init__(
         self,
-        conversation_repo: ConversationRepository,
-        participant_service: ParticipantService
-    ):
+        conversation_repo: ConversationRepository):
         self.conversation_repo = conversation_repo
-        self.participant_service = participant_service
 
-    async def create_private_chat(self, user_id_1: str, user_id_2: str) -> str:
-        new_conversation = await self.conversation_repo.create(is_group=False)
-        conversation_id = str(new_conversation["_id"])
 
-        participants = await self.participant_service.add_participants(conversation_id, [user_id_1, user_id_2])
-
-        return conversation_id
-
+    # Tìm kiếm hoặc thêm cuộc trò truyện ===============================================================================
     async def get_or_create_private_conversation(self, sender_id: str, target_user_id: str) -> str:
-        exciting_conversation_id = await self.participant_service.find_direct_conversation_id(sender_id, target_user_id)
+        existing_conv = await self.conversation_repo.find_direct_conversation_between_users(sender_id, target_user_id)
+        if existing_conv:
+            return str(existing_conv["_id"])
 
-        if exciting_conversation_id:
-            return exciting_conversation_id
+        # Tạo mới
+        new_conv = await self.conversation_repo.create(user_ids=[sender_id, target_user_id], is_group=False)
+        return str(new_conv["_id"])
 
-        return await self.create_private_chat(sender_id, target_user_id)
+
+    # Lấy danh sách chat của người dùng ================================================================================
+    async def get_conversations_for_user(self, user_id: str) -> List[Dict[str, Any]]:
+        conversations = await self.conversation_repo.get_conversations_for_user(user_id)
+        return conversations
