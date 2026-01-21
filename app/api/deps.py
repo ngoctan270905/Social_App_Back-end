@@ -4,7 +4,6 @@ from app.repositories.author_repository import AuthorRepository
 from app.repositories.book_repository import BookRepository
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
-from app.repositories.participant_repository import ParticipantRepository
 from app.repositories.posts_repository import PostRepository
 from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
@@ -19,7 +18,6 @@ from app.services.media_service import MediaService
 from app.services.message_service import MessageService
 from app.services.news_service import PostService
 from app.services.notification_service import NotificationService
-from app.services.participant_service import ParticipantService
 from app.services.upload_service import UploadService
 from app.services.user_profile_service import UserProfileService
 from app.services.user_service import UserService
@@ -33,9 +31,6 @@ def get_message_repository() -> MessageRepository:
 
 def get_conversation_repository() -> ConversationRepository:
     return ConversationRepository()
-
-def get_participant_repository() -> ParticipantRepository:
-    return ParticipantRepository()
 
 def get_media_repository() -> MediaRepository:
     return  MediaRepository()
@@ -119,14 +114,9 @@ def get_user_profile_service() -> UserProfileService:
     user_repo = get_user_repository()
     return UserProfileService(user_profile_repo, upload_service, media_repo=media_repo, user_repo=user_repo)
 
-def get_participant_service() -> ParticipantService:
-    participant_repo = get_participant_repository()
-    return ParticipantService(participant_repo=participant_repo)
-
 def get_conversation_service() -> ConversationService:
     conversation_repo = get_conversation_repository()
-    participant_service = get_participant_service()
-    return ConversationService(conversation_repo=conversation_repo, participant_service=participant_service)
+    return ConversationService(conversation_repo=conversation_repo)
 
 def get_message_service() -> MessageService:
     message_repo = get_message_repository()

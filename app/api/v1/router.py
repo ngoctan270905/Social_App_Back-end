@@ -9,7 +9,7 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 api_router.include_router(
     chat.router,
     prefix="/chats",
-    tags=["Posts"]
+    tags=["Chats"]
 )
 
 api_router.include_router(

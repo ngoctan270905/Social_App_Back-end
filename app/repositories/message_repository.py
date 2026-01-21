@@ -10,6 +10,8 @@ class MessageRepository:
         self.db = mongodb_client.get_database()
         self.collection = self.db.get_collection("messages")
 
+
+    # Thêm message mới =================================================================================================
     async def create(self, conversation_id: str, sender_id: str, content: str) -> Dict[str, Any]:
         doc = {
             "conversation_id": ObjectId(conversation_id),

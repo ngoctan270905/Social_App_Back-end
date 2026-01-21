@@ -1,23 +1,53 @@
-from fastapi import APIRouter, Depends, status, HTTPException, UploadFile, File, Form, Query
-from typing import List, Optional
-
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
+from app.api import deps
+from app.api.deps import get_message_service, get_conversation_service
 from app.core.dependencies import get_current_user
-
+from app.schemas.conversation import ConversationResponse
+from app.schemas.message import MessageCreate, MessageResponse
 from app.schemas.response import ResponseModel
-from app.schemas.posts import PostCreateResponse, PostCreate, PostType, PostsListResponse, \
-    PaginatedPostsResponse, PostDetailResponse
-
-from app.services.news_service import PostService
-from app.api.deps import get_post_service
+from app.services.message_service import MessageService
+from app.repositories.message_repository import MessageRepository
+from app.services.conversation_service import ConversationService
+from app.repositories.conversation_repository import ConversationRepository
 
 router = APIRouter()
 
-# GET lấy danh sách bài viết ===========================================================================================
-@router.get("/", summary="Lấy danh sách bài viết")
-async def get_news(
-        cursor: Optional[str] = None,
-        limit: int = Query(default=5, le=50),
-        service: PostService = Depends(get_post_service)):
+# Gửi tin nhắn =========================================================================================================
+@router.post("/", response_model=ResponseModel[MessageResponse], status_code=status.HTTP_201_CREATED)
+async def send_message(
+    *,
+    message_in: MessageCreate,
+    current_user: dict = Depends(get_current_user),
+    message_service: MessageService = Depends(get_message_service)
+):
+    message = await message_service.send_message(sender_id=current_user["_id"], data=message_in)
+    return ResponseModel(data=message, message="Gửi tin nhắn thành công")
 
-    posts = await service.get_all_posts(cursor=cursor, limit=limit)
-    return posts
+
+
+# Danh sách cuộc trò chuyện ============================================================================================
+@router.get("/", response_model=ResponseModel[List[ConversationResponse]], status_code=status.HTTP_200_OK)
+async def get_conversations(
+    *,
+    current_user: dict = Depends(get_current_user),
+    conversation_service: ConversationService = Depends(get_conversation_service)
+):
+    conversations = await conversation_service.get_conversations_for_user(user_id=current_user["_id"])
+    return ResponseModel(data=conversations, message="Lấy danh sách cuộc trò chuyện thành công")
+
+
+
+# Chi tiết cuộc trò chuyện =============================================================================================
+@router.get("/{conversation_id}", response_model=ResponseModel[List[MessageResponse]], status_code=status.HTTP_200_OK)
+async def get_messages(
+    *,
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user),
+    message_service: MessageService = Depends(get_message_service),
+    skip: int = 0,
+    limit: int = 50
+):
+
+    messages = await message_service.detail_message(conversation_id, skip=skip, limit=limit)
+    return ResponseModel(data=messages, message="Lấy tin nhắn thành công")
