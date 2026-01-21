@@ -6,7 +6,6 @@ from bson import ObjectId
 from fastapi import HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from app.repositories.user_profile_repository import UserProfileRepository
-from app.schemas.media import MediaResponse
 
 logger = logging.getLogger(__name__)
 

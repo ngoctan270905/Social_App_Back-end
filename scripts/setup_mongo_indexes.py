@@ -67,6 +67,39 @@ async def create_indexes():
         # await tokens_col.create_index("expires_at", expireAfterSeconds=0)
         # logger.info("  - Đã tạo TTL index cho 'expires_at' (Tự động xóa token hết hạn)")
 
+        # ==========================================
+        # 4. Collection: posts
+        # ==========================================
+        logger.info("Đang xử lý collection: posts")
+        posts_col = db.get_collection("posts")
+
+        # Index cho trang cá nhân (Lấy bài viết của user, sắp xếp mới nhất)
+        await posts_col.create_index([("user_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index (user_id, created_at) cho trang cá nhân")
+
+        # Index cho News Feed public (Lấy bài public, sắp xếp mới nhất)
+        await posts_col.create_index([("privacy", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index (privacy, created_at) cho Public Feed")
+
+        # Text Index cho tìm kiếm nội dung bài viết
+        await posts_col.create_index([("content", pymongo.TEXT)])
+        logger.info("  - Đã tạo text index cho 'content' để tìm kiếm")
+
+        # ==========================================
+        # 5. Collection: media
+        # ==========================================
+        logger.info("Đang xử lý collection: media")
+        media_col = db.get_collection("media")
+
+        # Unique Index cho public_id (Map với Cloudinary)
+        # Giúp tìm nhanh media trong DB nếu có webhook từ Cloudinary hoặc check trùng
+        await media_col.create_index("public_id", unique=True)
+        logger.info("  - Đã tạo unique index cho 'public_id'")
+
+        # Index cho created_at (Để quét và xóa file rác cũ)
+        await media_col.create_index([("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo index cho 'created_at'")
+
 
         logger.info("=" * 50)
         logger.info("HOÀN TẤT! Tất cả indexes đã được tạo thành công.")

@@ -1,22 +1,31 @@
 import datetime
 from datetime import datetime
 from fastapi import HTTPException, status, UploadFile
-from app.core.websocket import manager
 from typing import List, Optional
+
+from app.exceptions.post import NotFoundError
 from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
-from app.schemas.news import MediaPublic
-from app.schemas.user_profile import UpdateProfileAvatar
+from app.repositories.user_repository import UserRepository
+
+from app.schemas.posts import MediaPublic
+from app.schemas.user_profile import UpdateProfileAvatar, UserProfileDetail
 from app.services.upload_service import UploadService
 import logging
 from loguru import logger
 
 
 class UserProfileService:
-    def __init__(self, user_profile_repo: UserProfileRepository, upload_service: UploadService, media_repo: MediaRepository):
+    def __init__(
+            self,
+            user_profile_repo: UserProfileRepository,
+            upload_service: UploadService,
+            media_repo: MediaRepository,
+            user_repo: UserRepository):
         self.user_profile_repo = user_profile_repo
         self.upload_service = upload_service
         self.media_repo = media_repo
+        self.user_repo = user_repo
 
 
     async def update_profile_avatar(self,file: UploadFile,user_id: str) -> UpdateProfileAvatar:
@@ -49,6 +58,30 @@ class UserProfileService:
                 url=media["url"]
             )
         )
+
+    async def get_profile_by_id(self, user_id: str) -> UserProfileDetail:
+        user = await self.user_repo.get_by_id(user_id)
+        if not user:
+            raise NotFoundError()
+
+        profile_user = await self.user_profile_repo.get_by_user_id(user_id)
+
+        avatar_public = None
+        if profile_user["avatar"]:
+            media = await self.media_repo.get_by_id(profile_user["avatar"])
+            if media:
+                avatar_public = MediaPublic(
+                    id = media["_id"],
+                    type = media["type"],
+                    url = media["url"]
+                )
+
+        return UserProfileDetail(
+            _id=profile_user["_id"],
+            avatar=avatar_public,
+            name=profile_user["display_name"]
+        )
+
 
 
 
