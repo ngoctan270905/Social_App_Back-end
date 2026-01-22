@@ -33,4 +33,9 @@ class MessageService:
 
     async def detail_message(self, conversation_id: str, limit: int = 50, skip: int = 0) -> List[MessageResponse]:
         get_message = await self.message_repo.get_by_conversation(conversation_id=conversation_id, limit=limit, skip=skip)
-        return get_message
+
+        list_messages = []
+        for message in get_message:
+            list_messages.append(MessageResponse(**message))
+
+        return list_messages

@@ -3,7 +3,7 @@ from typing import List
 from app.api import deps
 from app.api.deps import get_message_service, get_conversation_service
 from app.core.dependencies import get_current_user
-from app.schemas.conversation import ConversationResponse
+from app.schemas.conversation import ConversationResponse, ConversationFindOrCreate
 from app.schemas.message import MessageCreate, MessageResponse
 from app.schemas.response import ResponseModel
 from app.services.message_service import MessageService
@@ -13,8 +13,31 @@ from app.repositories.conversation_repository import ConversationRepository
 
 router = APIRouter()
 
+
+@router.post("/",
+    response_model=ResponseModel[ConversationResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Tạo cuộc trò chuyện mới"
+)
+async def find_or_create_conversation(
+        *,
+        data: ConversationFindOrCreate,
+        current_user: dict = Depends(get_current_user),
+        service: ConversationService = Depends(get_conversation_service)
+):
+
+    target_user_id = data.target_user_id
+    print(f"target_user_id: {target_user_id}")
+
+    conversation = await service.find_or_create_private_conversation(
+        user_id=str(current_user["_id"]),
+        target_user_id=target_user_id
+    )
+    return ResponseModel(data=conversation, message="Tạo cuộc trò chuyện thành công")
+
+
 # Gửi tin nhắn =========================================================================================================
-@router.post("/", response_model=ResponseModel[MessageResponse], status_code=status.HTTP_201_CREATED)
+@router.post("/a", response_model=ResponseModel[MessageResponse], status_code=status.HTTP_201_CREATED)
 async def send_message(
     *,
     message_in: MessageCreate,
@@ -39,7 +62,7 @@ async def get_conversations(
 
 
 # Chi tiết cuộc trò chuyện =============================================================================================
-@router.get("/{conversation_id}", response_model=ResponseModel[List[MessageResponse]], status_code=status.HTTP_200_OK)
+@router.get("/{conversation_id}/messages", response_model=ResponseModel[List[MessageResponse]], status_code=status.HTTP_200_OK)
 async def get_messages(
     *,
     conversation_id: str,
