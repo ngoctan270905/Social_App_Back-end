@@ -23,7 +23,7 @@ class UserProfileRepository:
 
 
     # Truy vấn DB lấy thông tin của nhiều user =========================================================================
-    async def get_public_by_ids(self, user_ids: set[ObjectId]) -> list[Dict[str, Any]]:
+    async def get_public_by_ids(self, user_ids: list[ObjectId]) -> list[Dict[str, Any]]:
         cursor = self.collection.find({"user_id": {"$in": list(user_ids)}})
         users = []
         async for user in cursor:

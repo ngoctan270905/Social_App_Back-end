@@ -243,11 +243,12 @@ class ConversationResponse(BaseModel):
 Loại bỏ import `uploads` không được sử dụng.
 
 **Code cần thay đổi:**
+
 ```python
 # In app/api/v1/router.py
 from fastapi import APIRouter
 # Bỏ 'uploads' khỏi dòng import dưới đây
-from app.api.v1.endpoints import books, categories, authors, auth, users, news, profiles, chat
+from app.api.v1.endpoints import books, categories, authors, auth, users, news, profiles, conversations
 from app.api.v1.endpoints import notifications
 
 # ... (rest of the file) ...

@@ -27,4 +27,8 @@ class MessageRepository:
         cursor = self.collection.find(
             {"conversation_id": ObjectId(conversation_id)}
         ).sort("created_at", -1).skip(skip).limit(limit)
-        return await cursor.to_list(length=limit)
+        result = []
+        async for doc in cursor:
+            result.append(doc)
+
+        return result

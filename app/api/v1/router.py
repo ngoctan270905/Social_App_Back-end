@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import books, categories, authors, auth, users, news, uploads, profiles, chat
+from app.api.v1.endpoints import books, categories, authors, auth, users, news, uploads, profiles, conversations
 from app.api.v1.endpoints import notifications
 
 api_router = APIRouter()
@@ -7,9 +7,9 @@ api_router = APIRouter()
 api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
 
 api_router.include_router(
-    chat.router,
-    prefix="/chats",
-    tags=["Chats"]
+    conversations.router,
+    prefix="/conversations",
+    tags=["Conversations"]
 )
 
 api_router.include_router(
