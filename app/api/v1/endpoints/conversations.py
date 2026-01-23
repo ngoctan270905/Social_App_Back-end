@@ -3,7 +3,7 @@ from typing import List
 from app.api import deps
 from app.api.deps import get_message_service, get_conversation_service
 from app.core.dependencies import get_current_user
-from app.schemas.conversation import ConversationResponse, ConversationFindOrCreate
+from app.schemas.conversation import ConversationResponse, ConversationFindOrCreate, ConversationListItem
 from app.schemas.message import MessageCreate, MessageResponse
 from app.schemas.response import ResponseModel
 from app.services.message_service import MessageService
@@ -50,7 +50,7 @@ async def send_message(
 
 
 # Danh sách cuộc trò chuyện ============================================================================================
-@router.get("/", response_model=ResponseModel[List[ConversationResponse]], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=ResponseModel[List[ConversationListItem]], status_code=status.HTTP_200_OK)
 async def get_conversations(
     *,
     current_user: dict = Depends(get_current_user),

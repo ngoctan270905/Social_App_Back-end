@@ -31,3 +31,15 @@ class ConversationCreateResponse(BaseModel):
     participants: List[ParticipantEmbedded]
     is_group: bool = False
     created_at: datetime
+
+class ConversationPartner(BaseModel):
+    user_id: ObjectIdStr
+    name: str
+    avatar: str
+
+class ConversationListItem(BaseModel):
+    id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
+    is_group: bool = False
+    partner: Optional[ConversationPartner] = None
+
+

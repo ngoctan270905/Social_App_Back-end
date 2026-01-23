@@ -7,7 +7,7 @@ from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
-from app.schemas.conversation import ConversationResponse, ParticipantEmbedded
+from app.schemas.conversation import ConversationResponse, ParticipantEmbedded, ConversationListItem, ConversationPartner
 
 
 class ConversationService:
@@ -32,38 +32,37 @@ class ConversationService:
         return str(new_conv["_id"])
 
 
-    # Lấy danh sách chat của người dùng ================================================================================
-    # async def get_conversations_for_user(self, user_id: str) -> List[Dict[str, Any]]:
-    #     conversations = await self.conversation_repo.get_conversations_for_user(user_id)
-    #     return conversations
-
-    async def get_conversations_for_user(
-            self,
-            user_id: str
-    ) -> List[Dict[str, Any]]:
-
+    # Lấy danh sách cuộc trò chuyện ====================================================================================
+    async def get_conversations_for_user(self, user_id: str) -> List[ConversationListItem]:
         conversations = await self.conversation_repo.get_conversations_for_user(user_id)
-
         if not conversations:
             return []
 
         # ==================================================
-        # 1️⃣ Gom toàn bộ participants của TẤT CẢ conversation
+        # 1️⃣ Xác định partner cho mỗi conversation
         # ==================================================
-        user_ids_set = set()
+        partner_ids = []
 
         for conv in conversations:
-            for p in conv["participants"]:
-                user_ids_set.add(str(p["user_id"]))
+            p1 = conv["participants"][0]["user_id"]
+            p2 = conv["participants"][1]["user_id"]
 
-        user_ids = list(user_ids_set)
+            # partner_id = p2 if p1 == me else p1
+            if p1 == ObjectId(user_id):
+                partner_id = p2
+            else:
+                partner_id = p1
+
+            partner_ids.append(partner_id)
+
 
         # ==================================================
         # 2️⃣ Batch profiles
         # ==================================================
-        profiles = await self.user_profile_repo.get_public_by_ids(user_ids)
+        profiles = await self.user_profile_repo.get_public_by_ids(partner_ids)
+
         profile_map = {
-            str(profile["user_id"]): profile
+            profile["user_id"]: profile
             for profile in profiles
         }
 
@@ -80,41 +79,48 @@ class ConversationService:
         if avatar_ids:
             medias = await self.media_repo.get_by_ids(avatar_ids)
             media_map = {
-                str(media["_id"]): media
+                media["_id"]: media
                 for media in medias
             }
 
         # ==================================================
-        # 4️⃣ Gắn name + avatar vào từng conversation
+        # 4️⃣ Build response
         # ==================================================
         result = []
 
         for conv in conversations:
-            participants_response = []
+            p1 = conv["participants"][0]["user_id"]
+            p2 = conv["participants"][1]["user_id"]
 
-            for p in conv["participants"]:
-                uid = (p["user_id"])
-                profile = profile_map.get(uid)
+            if p1 == ObjectId(user_id):
+                partner_id = p2
+            else:
+                partner_id = p1
 
+            profile = profile_map.get(partner_id)
+
+            partner = None
+            if profile:
                 avatar_url = ""
-                if profile and profile.get("avatar"):
-                    media = media_map.get(str(profile["avatar"]))
+                avatar_id = profile.get("avatar")
+
+                if avatar_id:
+                    media = media_map.get(avatar_id)
                     avatar_url = media.get("url", "") if media else ""
 
-                participants_response.append({
-                    "user_id": uid,
-                    "name": profile.get("display_name", "Người dùng") if profile else "Người dùng",
-                    "avatar": avatar_url,
-                    "joined_at": p["joined_at"]
-                })
+                partner = ConversationPartner(
+                    user_id=str(partner_id),
+                    name=profile.get("display_name", "Người dùng"),
+                    avatar=avatar_url
+                )
 
-            result.append({
-                "_id": conv["_id"],
-                "participants": participants_response,
-                "is_group": conv["is_group"],
-                "created_at": conv["created_at"],
-                "updated_at": conv.get("updated_at")
-            })
+            result.append(
+                ConversationListItem(
+                    _id=conv["_id"],  # stringify tại response
+                    is_group=conv.get("is_group", False),
+                    partner=partner
+                )
+            )
 
         return result
 
