@@ -21,71 +21,41 @@ class ConversationService:
         self.media_repo = media_repo
 
 
-    # Tìm kiếm hoặc thêm cuộc trò truyện ===============================================================================
-    async def get_or_create_private_conversation(self, sender_id: str, target_user_id: str) -> str:
-        existing_conv = await self.conversation_repo.find_direct_conversation_between_users(sender_id, target_user_id)
-        if existing_conv:
-            return str(existing_conv["_id"])
-
-        # Tạo mới
-        new_conv = await self.conversation_repo.create(user_ids=[sender_id, target_user_id], is_group=False)
-        return str(new_conv["_id"])
-
-
     # Lấy danh sách cuộc trò chuyện ====================================================================================
     async def get_conversations_for_user(self, user_id: str) -> List[ConversationListItem]:
         conversations = await self.conversation_repo.get_conversations_for_user(user_id)
         if not conversations:
             return []
 
-        # ==================================================
-        # 1️⃣ Xác định partner cho mỗi conversation
-        # ==================================================
+        # 1️⃣ Xác định người nhắn ở cuộc trò chuyện
         partner_ids = []
-
         for conv in conversations:
             p1 = conv["participants"][0]["user_id"]
             p2 = conv["participants"][1]["user_id"]
 
-            # partner_id = p2 if p1 == me else p1
             if p1 == ObjectId(user_id):
                 partner_id = p2
             else:
                 partner_id = p1
-
             partner_ids.append(partner_id)
 
-
-        # ==================================================
-        # 2️⃣ Batch profiles
-        # ==================================================
+        # 2️⃣ Lấy profile của người đó
         profiles = await self.user_profile_repo.get_public_by_ids(partner_ids)
+        profile_map = {profile["user_id"]: profile for profile in profiles}
 
-        profile_map = {
-            profile["user_id"]: profile
-            for profile in profiles
-        }
-
-        # ==================================================
-        # 3️⃣ Batch avatars
-        # ==================================================
-        avatar_ids = [
-            profile["avatar"]
-            for profile in profiles
-            if profile.get("avatar")
-        ]
+        # 3️⃣ Gom avatar từ danh sách profile
+        avatar_ids = []
+        for profile in profiles:
+            avatar = profile.get("avatar", [])
+            if avatar:
+                avatar_ids.append(avatar)
 
         media_map = {}
         if avatar_ids:
             medias = await self.media_repo.get_by_ids(avatar_ids)
-            media_map = {
-                media["_id"]: media
-                for media in medias
-            }
+            media_map = {media["_id"]: media for media in medias }
 
-        # ==================================================
-        # 4️⃣ Build response
-        # ==================================================
+        # 4️⃣ Build response trả về cho client
         result = []
 
         for conv in conversations:
@@ -116,7 +86,7 @@ class ConversationService:
 
             result.append(
                 ConversationListItem(
-                    _id=conv["_id"],  # stringify tại response
+                    _id=conv["_id"],
                     is_group=conv.get("is_group", False),
                     partner=partner
                 )
@@ -124,15 +94,11 @@ class ConversationService:
 
         return result
 
-    async def _get_existing_private_conversation(
-            self,
-            user_id: str,
-            target_user_id: str
-    ) -> ConversationResponse | None:
 
-        existing_conversation_doc = await self.conversation_repo.find_by_participants(
-            [user_id, target_user_id]
-        )
+    # Tìm cuộc trò chuyện giữa 2 người =================================================================================
+    async def _get_existing_private_conversation(self, user_id: str,target_user_id: str) -> Optional[ConversationResponse]:
+
+        existing_conversation_doc = await self.conversation_repo.find_by_participants([user_id, target_user_id])
 
         if not existing_conversation_doc:
             return None
@@ -192,6 +158,8 @@ class ConversationService:
             updated_at=existing_conversation_doc.get("updated_at")
         )
 
+
+    # Thêm cuộc trò chuyện mới =========================================================================================
     async def _create_private_conversation(
             self,
             user_id: str,
@@ -269,6 +237,8 @@ class ConversationService:
             updated_at=created_conversation_doc["updated_at"]
         )
 
+
+    # Tìm và thêm ======================================================================================================
     async def find_or_create_private_conversation(
             self,
             user_id: str,

@@ -7,7 +7,7 @@ T = TypeVar('T')
 # schema cho phản hồi thành công
 class ResponseModel(GenericModel, Generic[T]):
     status: str = Field("success", description="Trạng thái của request")
-    message: Optional[str] = Field(None, description="Thông điệp tùy chọn")
+    # message: Optional[str] = Field(None, description="Thông điệp tùy chọn")
     data: Optional[T] = Field(None, description="Dữ liệu chính")
 
 # schema cho lỗi

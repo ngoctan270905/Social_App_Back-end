@@ -23,12 +23,43 @@ class MessageRepository:
         doc["_id"] = result.inserted_id
         return doc
 
-    async def get_by_conversation(self, conversation_id: str, limit: int = 50, skip: int = 0) -> List[Dict[str, Any]]:
-        cursor = self.collection.find(
-            {"conversation_id": ObjectId(conversation_id)}
-        ).sort("created_at", -1).skip(skip).limit(limit)
-        result = []
-        async for doc in cursor:
-            result.append(doc)
+    # async def get_by_conversation(self, conversation_id: str, limit: int = 50, skip: int = 0) -> List[Dict[str, Any]]:
+    #     cursor = self.collection.find(
+    #         {"conversation_id": ObjectId(conversation_id)}
+    #     ).sort("created_at", -1).skip(skip).limit(limit)
+    #     result = []
+    #     async for doc in cursor:
+    #         result.append(doc)
+    #
+    #     return result
 
-        return result
+    async def get_by_conversation(
+            self,
+            conversation_id: str,
+            cursor: Optional[str] = None,
+            limit: int = 50
+    ) -> List[Dict[str, Any]]:
+
+        # 1. Tạo query filter
+        query: Dict[str, Any] = {
+            "conversation_id": ObjectId(conversation_id)
+        }
+
+        # 2. Nếu có cursor thì lấy message cũ hơn cursor đó
+        if cursor:
+            query["_id"] = {"$lt": ObjectId(cursor)}
+
+        db_cursor = (
+            self.collection
+            .find(query)
+            .sort("_id", -1)
+            .limit(limit)
+        )
+
+        messages = []
+        async for message in db_cursor:
+            messages.append(message)
+
+        return messages
+
+
