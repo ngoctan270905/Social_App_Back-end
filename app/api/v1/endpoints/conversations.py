@@ -32,16 +32,17 @@ async def find_or_create_conversation(
     return ResponseModel(data=conversation)
 
 
+# ======================================================================================================================
 @router.delete("/{conversation_id}",
                status_code=status.HTTP_204_NO_CONTENT,
-               summary="Xóa cuộc trò chuyện"
-               )
-async def delete_conversation(
+               summary="Ẩn cuộc trò chuyện"
+)
+async def hide_conversation_for_oneself(
         conversation_id: str,
         current_user: dict = Depends(get_current_user),
         service: ConversationService = Depends(get_conversation_service)
 ):
-    success = await service.delete_conversation(
+    deleted_at = await service.hide_conversation_for_user(
         conversation_id=conversation_id,
         user_id=str(current_user["_id"])
     )
@@ -67,6 +68,7 @@ async def get_messages(
     )
     return result
 
+
 # ======================================================================================================================
 @router.post("/{conversation_id}/messages",
              response_model=ResponseModel[MessageResponse],
@@ -87,7 +89,6 @@ async def send_message(
     return ResponseModel(data=message)
 
 
-
 # ======================================================================================================================
 @router.get("/",
             response_model=ResponseModel[List[ConversationListItem]],
@@ -103,13 +104,7 @@ async def get_conversations(
     return ResponseModel(data=conversations)
 
 
-
-
-
-
-
-
-
+# ======================================================================================================================
 @router.delete("/{conversation_id}/messages/{message_id}",
                status_code=status.HTTP_204_NO_CONTENT,
                summary="Xóa tin nhắn"
@@ -125,3 +120,5 @@ async def delete_message(
         message_id=message_id,
         user_id=str(current_user["_id"])
     )
+
+
