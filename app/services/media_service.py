@@ -45,11 +45,11 @@ class MediaService:
             "type": upload_result["type"],
             "public_id": upload_result["public_id"],
             "url": upload_result["url"],
-            "format": upload_result["format"],
-            "bytes": upload_result["bytes"],
-            "width": upload_result.get("width"),
-            "height": upload_result.get("height"),
-            "duration": upload_result.get("duration"),
+            # "format": upload_result["format"],
+            # "bytes": upload_result["bytes"],
+            # "width": upload_result.get("width"),
+            # "height": upload_result.get("height"),
+            # "duration": upload_result.get("duration"),
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }

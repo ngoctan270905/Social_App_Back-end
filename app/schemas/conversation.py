@@ -22,6 +22,7 @@ class ConversationResponse(BaseModel):
     is_group: bool = False
     created_at: datetime
     updated_at: Optional[datetime] = None
+    deleted_by: List[DeletedBy] = []
 
 class ConversationFindOrCreate(BaseModel):
     target_user_id: str
@@ -41,5 +42,10 @@ class ConversationListItem(BaseModel):
     id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
     is_group: bool = False
     partner: Optional[ConversationPartner] = None
+    deleted_by: List[DeletedBy] = []
+
+class DeletedBy(BaseModel):
+    user_id: ObjectIdStr
+    deleted_at: datetime
 
 

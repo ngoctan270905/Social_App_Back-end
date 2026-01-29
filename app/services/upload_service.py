@@ -91,11 +91,11 @@ class UploadService:
                 "type": media_type,
                 "public_id": upload_result.get("public_id"),
                 "url": upload_result.get("secure_url"),
-                "format": upload_result.get("format"),
-                "bytes": upload_result.get("bytes"),
-                "width": upload_result.get("width"),
-                "height": upload_result.get("height"),
-                "duration": upload_result.get("duration"),
+                # "format": upload_result.get("format"),
+                # "bytes": upload_result.get("bytes"),
+                # "width": upload_result.get("width"),
+                # "height": upload_result.get("height"),
+                # "duration": upload_result.get("duration"),
             }
 
         except HTTPException:

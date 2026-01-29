@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Any
 from bson import ObjectId
 from fastapi import HTTPException
 
-from app.exceptions.post import ForbiddenError
+from app.exceptions.post import ForbiddenError, NotFoundError
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.media_repository import MediaRepository
 from app.repositories.message_repository import MessageRepository
@@ -32,7 +32,7 @@ class ConversationService:
         if not conversations:
             return []
 
-        # 1️⃣ Xác định người nhắn ở cuộc trò chuyện
+        # 1.Xác định người nhắn ở cuộc trò chuyện
         partner_ids = []
         for conv in conversations:
             p1 = conv["participants"][0]["user_id"]
@@ -44,11 +44,11 @@ class ConversationService:
                 partner_id = p1
             partner_ids.append(partner_id)
 
-        # 2️⃣ Lấy profile của người đó
+        # 2.Lấy profile của người đó
         profiles = await self.user_profile_repo.get_public_by_ids(partner_ids)
         profile_map = {profile["user_id"]: profile for profile in profiles}
 
-        # 3️⃣ Gom avatar từ danh sách profile
+        # 3.Gom avatar từ danh sách profile
         avatar_ids = []
         for profile in profiles:
             avatar = profile.get("avatar", [])
@@ -60,7 +60,7 @@ class ConversationService:
             medias = await self.media_repo.get_by_ids(avatar_ids)
             media_map = {media["_id"]: media for media in medias }
 
-        # 4️⃣ Build response trả về cho client
+        # 4.Build response trả về cho client
         result = []
 
         for conv in conversations:
@@ -164,12 +164,29 @@ class ConversationService:
         )
 
 
+    # Ẩn cuộc trò chuyện ===============================================================================================
+    async def hide_conversation_for_user(self, conversation_id: str, user_id: str) -> bool:
+        conversation = await self.conversation_repo.get_by_id(conversation_id)
+        if not conversation:
+            raise NotFoundError()
+
+        is_participant = False
+
+        for participant in conversation.get("participants", []):
+            participant_user_id = str(participant["user_id"])
+
+            if participant_user_id == user_id:
+                is_participant = True
+                break
+
+        if not is_participant:
+            raise ForbiddenError()
+
+        return await self.conversation_repo.hide_for_user(conversation_id, user_id)
+
+
     # Thêm cuộc trò chuyện mới =========================================================================================
-    async def _create_private_conversation(
-            self,
-            user_id: str,
-            target_user_id: str
-    ) -> ConversationResponse:
+    async def _create_private_conversation(self, user_id: str, target_user_id: str) -> ConversationResponse:
 
         now = datetime.utcnow()
 
@@ -243,164 +260,31 @@ class ConversationService:
         )
 
 
-    # Tìm và thêm ======================================================================================================
-    async def find_or_create_private_conversation(
-            self,
-            user_id: str,
-            target_user_id: str
-    ) -> ConversationResponse:
+    # Tìm hoặc tạo direct ==============================================================================================
+    async def find_or_create_private_conversation(self,user_id: str,target_user_id: str) -> ConversationResponse:
 
-        conversation = await self._get_existing_private_conversation(
+        # 1. Tìm cuộc trò chuyện đã tồn tại
+        conversation_doc = await self.conversation_repo.find_direct_conversation_between_users(
             user_id, target_user_id
         )
 
-        if conversation:
-            return conversation
+        # 2. Nếu tìm thấy:
+        if conversation_doc:
+            conversation_id = str(conversation_doc["_id"])
 
-        return await self._create_private_conversation(
-            user_id, target_user_id
-        )
+            # Kiểm tra xem người dùng hiện tại có đang ẩn nó không
+            is_hidden = False
+            deleted_by_list = conversation_doc.get("deleted_by", [])
+            for deleted_item in deleted_by_list:
+                deleted_user_id = str(deleted_item["user_id"])
+                if deleted_user_id == user_id:
+                    is_hidden = True
+                    break
 
-    # async def find_or_create_private_conversation(self, user_id: str, target_user_id: str) -> ConversationResponse:
-    #     print(f"đi vào đây")
-    #     existing_conversation_doc = await self.conversation_repo.find_by_participants([user_id, target_user_id])
-    #
-    #     if existing_conversation_doc:
-    #         participants = existing_conversation_doc["participants"]
-    #
-    #         # 1️⃣ Gom toàn bộ user_id
-    #         user_ids = [(p["user_id"]) for p in participants]
-    #
-    #         # 2️⃣ Lấy toàn bộ profile 1 lần
-    #         profiles = await self.user_profile_repo.get_public_by_ids(user_ids)
-    #         profile_map = {
-    #             str(profile["user_id"]): profile
-    #             for profile in profiles
-    #         }
-    #
-    #         # 3️⃣ Gom toàn bộ avatar_id (nếu có)
-    #         avatar_ids = [
-    #             profile["avatar"]
-    #             for profile in profiles
-    #             if profile.get("avatar")
-    #         ]
-    #
-    #         # 4️⃣ Lấy toàn bộ media 1 lần
-    #         media_map = {}
-    #         if avatar_ids:
-    #             medias = await self.media_repo.get_by_ids(avatar_ids)
-    #             media_map = {
-    #                 str(media["_id"]): media
-    #                 for media in medias
-    #             }
-    #
-    #         # 5️⃣ Build response (KHÔNG query DB trong loop)
-    #         participants_response = []
-    #
-    #         for p in participants:
-    #             uid = str(p["user_id"])
-    #             profile = profile_map.get(uid)
-    #
-    #             avatar_url = ""
-    #             if profile and profile.get("avatar"):
-    #                 media = media_map.get(str(profile["avatar"]))
-    #                 avatar_url = media.get("url", "") if media else ""
-    #
-    #             participants_response.append(
-    #                 ParticipantEmbedded(
-    #                     user_id=uid,
-    #                     name=profile.get("display_name", "Người dùng") if profile else "Người dùng",
-    #                     avatar=avatar_url,
-    #                     joined_at=p["joined_at"]
-    #                 )
-    #             )
-    #
-    #         return ConversationResponse(
-    #             _id=existing_conversation_doc["_id"],
-    #             participants=participants_response,
-    #             is_group=existing_conversation_doc["is_group"],
-    #             created_at=existing_conversation_doc["created_at"],
-    #             updated_at=existing_conversation_doc.get("updated_at")
-    #         )
-    #
-    #     # 2. Nếu chưa, lấy thông tin chi tiết của cả hai người dùng để tạo đối tượng participant
-    #
-    #     user_profile_doc = await self.user_profile_repo.get_by_user_id(user_id)
-    #     target_user_profile_doc = await self.user_profile_repo.get_by_user_id(target_user_id)
-    #
-    #     user_avatar_url = ""
-    #     target_avatar_url = ""
-    #
-    #     if user_profile_doc.get("avatar", []):
-    #         media = await self.media_repo.get_by_id(user_profile_doc["avatar"])
-    #         user_avatar_url = media.get("url", "") if media else ""
-    #
-    #     if target_user_profile_doc.get("avatar", []):
-    #         media = await self.media_repo.get_by_id(target_user_profile_doc["avatar"])
-    #         target_avatar_url = media.get("url", "") if media else ""
-    #
-    #
-    #     # 4. Tạo cuộc trò chuyện mới với dữ liệu participant đầy đủ
-    #     new_conversation_data = {
-    #         "participants": [
-    #             {
-    #                 "user_id": ObjectId(user_id),
-    #                 "joined_at": datetime.utcnow()
-    #             },
-    #             {
-    #                 "user_id": ObjectId(target_user_id),
-    #                 "joined_at": datetime.utcnow()
-    #             }
-    #         ],
-    #         "is_group": False,
-    #         "created_at": datetime.utcnow(),
-    #         "updated_at": datetime.utcnow()
-    #     }
-    #
-    #     created_conversation_doc = await self.conversation_repo.create(new_conversation_data)
-    #
-    #     participants_response = [
-    #         ParticipantEmbedded(
-    #             user_id=user_id,
-    #             name=user_profile_doc.get("display_name", "Người dùng"),
-    #             avatar=user_avatar_url,
-    #             joined_at=created_conversation_doc["participants"][0]["joined_at"]
-    #         ),
-    #         ParticipantEmbedded(
-    #             user_id=target_user_id,
-    #             name=target_user_profile_doc.get("display_name", "Người dùng"),
-    #             avatar=target_avatar_url,
-    #             joined_at=created_conversation_doc["participants"][1]["joined_at"]
-    #         )
-    #     ]
-    #
-    #     return ConversationResponse(
-    #         _id=created_conversation_doc["_id"],
-    #         participants=participants_response,
-    #         is_group=created_conversation_doc["is_group"],
-    #         created_at=created_conversation_doc["created_at"],
-    #         updated_at=created_conversation_doc["updated_at"]
-    #     )
+            if is_hidden:
+                await self.conversation_repo.resurrect_for_user(conversation_id, user_id)
 
-    async def delete_conversation(self, conversation_id: str, user_id: str) -> bool:
-        # 1. Lấy thông tin
-        conversation = await self.conversation_repo.get_by_id(conversation_id)
-        if not conversation:
-            return False
+            return await self._get_existing_private_conversation(user_id, target_user_id)
 
-        # 2. Check quyền
-        is_participant = False
-        for p in conversation["participants"]:
-            if str(p["user_id"]) == user_id:
-                is_participant = True
-                break
+        return await self._create_private_conversation(user_id, target_user_id)
 
-        if not is_participant:
-            raise ForbiddenError()
-
-        # 3. Xóa tin nhắn trước (để đảm bảo sạch sẽ)
-        # Lưu ý: Cần inject message_repo vào service này
-        await self.message_repo.delete_by_conversation_id(conversation_id)
-
-        # 4. Xóa conversation
-        return await self.conversation_repo.delete(conversation_id)
