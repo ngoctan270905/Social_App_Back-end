@@ -32,6 +32,40 @@ async def find_or_create_conversation(
     return ResponseModel(data=conversation)
 
 
+@router.delete("/{conversation_id}",
+               status_code=status.HTTP_204_NO_CONTENT,
+               summary="Xóa cuộc trò chuyện"
+               )
+async def delete_conversation(
+        conversation_id: str,
+        current_user: dict = Depends(get_current_user),
+        service: ConversationService = Depends(get_conversation_service)
+):
+    success = await service.delete_conversation(
+        conversation_id=conversation_id,
+        user_id=str(current_user["_id"])
+    )
+
+
+# ======================================================================================================================
+@router.get("/{conversation_id}/messages",
+            status_code=status.HTTP_200_OK,
+            summary="Lấy danh sách tin nhắn"
+)
+async def get_messages(
+    *,
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user),
+    message_service: MessageService = Depends(get_message_service),
+    cursor: Optional[str] = None,
+    limit: int = 15
+):
+    result = await message_service.get_messages(
+        conversation_id=conversation_id,
+        cursor=cursor,
+        limit=limit
+    )
+    return result
 
 # ======================================================================================================================
 @router.post("/{conversation_id}/messages",
@@ -70,22 +104,24 @@ async def get_conversations(
 
 
 
-# ======================================================================================================================
-@router.get("/{conversation_id}/messages",
-            status_code=status.HTTP_200_OK,
-            summary="Lấy danh sách tin nhắn"
-)
-async def get_messages(
-    *,
-    conversation_id: str,
-    current_user: dict = Depends(get_current_user),
-    message_service: MessageService = Depends(get_message_service),
-    cursor: Optional[str] = None,
-    limit: int = 50
+
+
+
+
+
+
+@router.delete("/{conversation_id}/messages/{message_id}",
+               status_code=status.HTTP_204_NO_CONTENT,
+               summary="Xóa tin nhắn"
+               )
+async def delete_message(
+        conversation_id: str,
+        message_id: str,
+        current_user: dict = Depends(get_current_user),
+        message_service: MessageService = Depends(get_message_service)
 ):
-    result = await message_service.get_messages(
+    success = await message_service.delete_message(
         conversation_id=conversation_id,
-        cursor=cursor,
-        limit=limit
+        message_id=message_id,
+        user_id=str(current_user["_id"])
     )
-    return result

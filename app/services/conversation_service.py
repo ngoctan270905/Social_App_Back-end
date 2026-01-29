@@ -2,9 +2,12 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 from bson import ObjectId
+from fastapi import HTTPException
 
+from app.exceptions.post import ForbiddenError
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.media_repository import MediaRepository
+from app.repositories.message_repository import MessageRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.conversation import ConversationResponse, ParticipantEmbedded, ConversationListItem, ConversationPartner
@@ -15,10 +18,12 @@ class ConversationService:
         self,
         conversation_repo: ConversationRepository,
         user_profile_repo: UserProfileRepository,
-        media_repo: MediaRepository,):
+        media_repo: MediaRepository,
+        message_repo: MessageRepository):
         self.conversation_repo = conversation_repo
         self.user_profile_repo = user_profile_repo
         self.media_repo = media_repo
+        self.message_repo = message_repo
 
 
     # Lấy danh sách cuộc trò chuyện ====================================================================================
@@ -376,3 +381,26 @@ class ConversationService:
     #         created_at=created_conversation_doc["created_at"],
     #         updated_at=created_conversation_doc["updated_at"]
     #     )
+
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> bool:
+        # 1. Lấy thông tin
+        conversation = await self.conversation_repo.get_by_id(conversation_id)
+        if not conversation:
+            return False
+
+        # 2. Check quyền
+        is_participant = False
+        for p in conversation["participants"]:
+            if str(p["user_id"]) == user_id:
+                is_participant = True
+                break
+
+        if not is_participant:
+            raise ForbiddenError()
+
+        # 3. Xóa tin nhắn trước (để đảm bảo sạch sẽ)
+        # Lưu ý: Cần inject message_repo vào service này
+        await self.message_repo.delete_by_conversation_id(conversation_id)
+
+        # 4. Xóa conversation
+        return await self.conversation_repo.delete(conversation_id)

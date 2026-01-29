@@ -118,9 +118,11 @@ def get_conversation_service() -> ConversationService:
     conversation_repo = get_conversation_repository()
     media_repo = get_media_repository()
     user_profile_repo = get_user_profile_repository()
-    return ConversationService(conversation_repo=conversation_repo, media_repo=media_repo, user_profile_repo=user_profile_repo)
+    message_repo = get_message_repository()
+    return ConversationService(conversation_repo=conversation_repo, media_repo=media_repo, user_profile_repo=user_profile_repo, message_repo=message_repo)
 
 def get_message_service() -> MessageService:
     message_repo = get_message_repository()
     conversation_service = get_conversation_service()
-    return MessageService(message_repo=message_repo, conversation_service=conversation_service)
+    conversation_repo = get_conversation_repository()
+    return MessageService(message_repo=message_repo, conversation_service=conversation_service, conversation_repo=conversation_repo)

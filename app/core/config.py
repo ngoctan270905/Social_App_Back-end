@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     REDIS_DB: int
 
     # Cấu hình cài đặt Redis
-    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_ENABLED: bool = False
     RATE_LIMIT_DEFAULT: str = "100/minute"
     RATE_LIMIT_AUTH: str = "10/minute"
 

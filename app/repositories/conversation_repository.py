@@ -78,3 +78,12 @@ class ConversationRepository:
     async def get_conversations_for_user(self, user_id: str) -> List[Dict[str, Any]]:
         cursor = self.collection.find({"participants.user_id": ObjectId(user_id)})
         return await cursor.to_list(length=1000)
+
+
+    async def delete(self, conversation_id: str) -> bool:
+        """
+        Xóa document cuộc trò chuyện theo ID.
+        Trả về True nếu xóa thành công, False nếu không tìm thấy.
+        """
+        result = await self.collection.delete_one({"_id": ObjectId(conversation_id)})
+        return result.deleted_count > 0

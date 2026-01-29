@@ -7,7 +7,6 @@ from .posts import PaginationInfo
 from .utils import ObjectIdStr
 
 class MessageCreate(BaseModel):
-    conversation_id: Optional[ObjectIdStr] = None
     content: str
 
 class MessageResponse(BaseModel):

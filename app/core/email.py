@@ -22,7 +22,7 @@ fm = FastMail(conf)
 
 async def send_email_async(subject: str, email_to: str, body: dict, template_name: str):
     """
-    Generic function to sends an email using a template.
+    Hàm dùng chung để gửi email bằng template
     """
     message = MessageSchema(
         subject=subject,

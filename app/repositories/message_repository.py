@@ -62,4 +62,22 @@ class MessageRepository:
 
         return messages
 
+    async def delete_by_conversation_id(self, conversation_id: str) -> int:
+        """
+        Xóa tất cả tin nhắn thuộc về một cuộc trò chuyện.
+        Trả về số lượng tin nhắn đã xóa.
+        """
+        result = await self.collection.delete_many({"conversation_id": ObjectId(conversation_id)})
+        return result.deleted_count
+
+    async def delete(self, message_id: str) -> bool:
+        """
+        Xóa document tin nhắn theo ID.
+        """
+        result = await self.collection.delete_one({"_id": ObjectId(message_id)})
+        return result.deleted_count > 0
+
+    async def get_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        return await self.collection.find_one({"_id": ObjectId(message_id)})
+
 
