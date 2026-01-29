@@ -98,4 +98,24 @@ class MessageService:
             raise ForbiddenError()
 
         # 4. Thực hiện xóa
-        return await self.message_repo.delete(message_id)
+        deleted = await self.message_repo.delete(message_id)
+
+        conversation = await self.conversation_repo.get_by_id(conversation_id)
+
+        if conversation and "participants" in conversation:
+            payload = {
+                "type": "message_deleted",
+                "conversation_id": conversation_id,
+                "data": {"id": message_id}
+            }
+
+            recipient_ids = []
+
+            for participant in conversation["participants"]:
+                user_id = participant.get("user_id")
+                if user_id:
+                    recipient_ids.append(str(user_id))
+
+            await manager.broadcast_via_redis(recipient_ids, payload)
+
+        return True

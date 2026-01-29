@@ -14,6 +14,9 @@ class ConversationCreate(BaseModel):
     participant_ids: List[ObjectIdStr]
     is_group: bool = False
 
+class DeletedBy(BaseModel):
+    user_id: ObjectIdStr
+    deleted_at: datetime
 
 # Response trả về cho Client
 class ConversationResponse(BaseModel):
@@ -44,8 +47,6 @@ class ConversationListItem(BaseModel):
     partner: Optional[ConversationPartner] = None
     deleted_by: List[DeletedBy] = []
 
-class DeletedBy(BaseModel):
-    user_id: ObjectIdStr
-    deleted_at: datetime
+
 
 
