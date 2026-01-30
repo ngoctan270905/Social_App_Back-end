@@ -40,3 +40,12 @@ class UserProfileRepository:
         result = await self.collection.find_one({"user_id" : ObjectId(user_id)})
         return result
 
+
+    # Truy vấn DB update cover ========================================================================================
+    async def update_cover(self,  user_id: str,  cover_id: ObjectId) -> Dict[str, Any]:
+        update = await self.collection.update_one(
+            {"user_id": ObjectId(user_id)},
+            {"$set": {"cover": cover_id}}
+        )
+        result = await self.collection.find_one({"user_id" : ObjectId(user_id)})
+        return result

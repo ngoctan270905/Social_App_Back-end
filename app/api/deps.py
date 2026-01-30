@@ -70,8 +70,7 @@ def get_notification_service() -> NotificationService:
     return NotificationService()
 
 def get_upload_service() -> UploadService:
-    user_profile_repo = get_user_profile_repository()
-    return UploadService(user_profile_repo)
+    return UploadService()
 
 def get_media_services() -> MediaService:
     upload_service = get_upload_service()

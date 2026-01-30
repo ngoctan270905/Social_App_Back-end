@@ -18,11 +18,11 @@ api_router.include_router(
     tags=["Posts"]
 )
 
-# api_router.include_router(
-#     profiles.router,
-#     prefix="/profiles",
-#     tags=["Profiles"]
-# )
+api_router.include_router(
+    profiles.router,
+    prefix="/profiles",
+    tags=["Profiles"]
+)
 
 # ===== Auth routes =====
 api_router.include_router(

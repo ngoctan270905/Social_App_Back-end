@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = False
     MAIL_FROM_NAME: str = PROJECT_NAME
 
+    # Địa chỉ url back-end
+    SERVER_BASE_URL: str
+
     # Địa chỉ url front-end tạo link trong email
     CLIENT_BASE_URL: str
 
