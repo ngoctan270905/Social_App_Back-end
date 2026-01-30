@@ -2,6 +2,8 @@ from enum import Enum
 from pydantic import BaseModel, Field, computed_field
 from typing import Optional, List
 from datetime import datetime
+
+from .media import MediaPublic
 from .utils import ObjectIdStr
 
 # ============== DOMAIN ENUM ===========================================================================================
@@ -21,12 +23,6 @@ class PostUpdate(BaseModel):
     content: Optional[str] = Field(default=None, max_length=5000)
     privacy: Optional[PostType] = None
 
-
-# ============= SHARED SUB MODELS ======================================================================================
-class MediaPublic(BaseModel):
-    id: ObjectIdStr
-    type: str
-    url: str
 
 
 class UserPublic(BaseModel):

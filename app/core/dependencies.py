@@ -10,6 +10,7 @@ from app.core.security import verify_scoped_token
 from fastapi.security import OAuth2PasswordBearer
 from typing import Dict, Any, Optional
 from app.core.redis_client import get_redis_client
+from app.core.config import settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 # Hàm xác minh người dùng dựa trên token cho mỗi Request
@@ -59,8 +60,14 @@ async def get_current_user(
     avatar_url = None
     if profile and profile.get("avatar"):
         media = await media_repo.get_by_id(profile["avatar"])
-        if media:
-            avatar_url = media.get("url")
+        if media and media.get("url"):
+            avatar_url = f"{settings.SERVER_BASE_URL}/image/{media.get('url')}"
+
+    cover_url = None
+    if profile and profile.get("cover"):
+        media = await media_repo.get_by_id(profile["cover"])
+        if media and media.get("url"):
+            cover_url = f"{settings.SERVER_BASE_URL}/image/{media.get('url')}"
 
     full_user_data = {
         "_id": str(user["_id"]),
@@ -70,6 +77,7 @@ async def get_current_user(
         "first_name": profile.get("first_name") if profile else None,
         "last_name": profile.get("last_name") if profile else None,
         "avatar": avatar_url,
+        "cover": cover_url,
     }
 
     # if "_id" in user:
