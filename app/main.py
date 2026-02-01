@@ -26,6 +26,11 @@ app.mount(
     StaticFiles(directory="resource/image"),
     name="image"
 )
+app.mount(
+    "/video",
+    StaticFiles(directory="resource/video"),
+    name="video"
+)
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 

@@ -25,12 +25,12 @@ class MediaService:
             folder: str
     ) -> MediaResponse:
 
-        # Upload Cloudinary (image hoặc video)
         try:
             upload_result = await self.upload_service.upload_media(
                 file=file,
                 folder=folder
             )
+            print(f" test: {upload_result}")
         except HTTPException:
             raise
         except Exception as e:
@@ -43,15 +43,8 @@ class MediaService:
         # Build media document
         media_data = {
             "type": upload_result["type"],
-            "public_id": upload_result["public_id"],
-            "url": upload_result["url"],
-            # "format": upload_result["format"],
-            # "bytes": upload_result["bytes"],
-            # "width": upload_result.get("width"),
-            # "height": upload_result.get("height"),
-            # "duration": upload_result.get("duration"),
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "url": upload_result["path"],
+            "created_at": datetime.utcnow()
         }
 
         # Save DB

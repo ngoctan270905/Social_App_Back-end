@@ -28,5 +28,36 @@ class UploadService:
             f.write(await file.read())
 
         return {
-            "path": f"{folder}/{filename}"
+            "type": "image",
+            "path": f"image/{folder}/{filename}"
         }
+
+    async def upload_video(self, file: UploadFile, folder: str) -> dict:
+        if not file.content_type.startswith("video/"):
+            raise HTTPException(status_code=400, detail="File không phải video")
+
+        # tạo đường dẫn
+        video_dir = os.path.join(BASE_DIR, "video", folder)
+        os.makedirs(video_dir, exist_ok=True)
+
+        # tạo tên
+        ext = os.path.splitext(file.filename)[1]
+        filename = f"{uuid.uuid4().hex}{ext}"
+
+        full_path = os.path.join(video_dir, filename)
+
+        with open(full_path, "wb") as f:
+            f.write(await file.read())
+
+        return {
+            "type": "video",
+            "path": f"video/{folder}/{filename}"
+        }
+
+    async def upload_media(self, file: UploadFile, folder: str) -> dict:
+        if file.content_type.startswith("image/"):
+            return await self.upload_image(file, folder)
+        elif file.content_type.startswith("video/"):
+            return await self.upload_video(file, folder)
+        else:
+            raise HTTPException(status_code=400, detail="Định dạng file không được hỗ trợ (chỉ hỗ trợ ảnh và video)")

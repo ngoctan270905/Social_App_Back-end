@@ -44,24 +44,24 @@ async def upload_cover(
     return ResponseModel(data=updated_cover)
 
 
-# @router.get("/{user_id}/posts", summary="Lấy danh sách bài viết của một người dùng")
-# async def get_user_posts(
-#         user_id: str,
-#         cursor: Optional[str] = None,
-#         limit: int = Query(default=5, le=50),
-#         service: PostService = Depends(get_post_service),
-#         current_user: dict = Depends(get_current_user)):
-#     return await service.get_user_posts(
-#         user_id=user_id,
-#         current_user_id=current_user["_id"],
-#         cursor=cursor,
-#         limit=limit
-#     )
-#
-# @router.get("/{user_id}", response_model=ResponseModel[UserProfileDetail], summary="Lấy thông tin profile của người dùng")
-# async def get_profile_user(
-#         user_id: str,
-#         service: UserProfileService = Depends(get_user_profile_service),
-#         current_user: dict = Depends(get_current_user)):
-#     profile_user = await service.get_profile_by_id(user_id)
-#     return ResponseModel(data=profile_user, message="Lấy thông tin user thành công")
+@router.get("/{user_id}/posts", summary="Lấy danh sách bài viết của một người dùng")
+async def get_user_posts(
+        user_id: str,
+        cursor: Optional[str] = None,
+        limit: int = Query(default=5, le=50),
+        service: PostService = Depends(get_post_service),
+        current_user: dict = Depends(get_current_user)):
+    return await service.get_user_posts(
+        user_id=user_id,
+        current_user_id=current_user["_id"],
+        cursor=cursor,
+        limit=limit
+    )
+
+@router.get("/{user_id}", response_model=ResponseModel[UserProfileDetail], summary="Lấy thông tin profile của người dùng")
+async def get_profile_user(
+        user_id: str,
+        service: UserProfileService = Depends(get_user_profile_service),
+        current_user: dict = Depends(get_current_user)):
+    profile_user = await service.get_profile_by_id(user_id)
+    return ResponseModel(data=profile_user, message="Lấy thông tin user thành công")

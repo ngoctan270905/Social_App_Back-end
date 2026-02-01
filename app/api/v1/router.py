@@ -1,10 +1,16 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, users, news, uploads, profiles, conversations
+from app.api.v1.endpoints import auth, users, news, uploads, profiles, conversations, comments
 from app.api.v1.endpoints import notifications
 
 api_router = APIRouter()
 
 # api_router.include_router(notifications.router, prefix="/notifications", tags=["Notifications"])
+
+api_router.include_router(
+    comments.router,
+    prefix="/comments",
+    tags=["Comments"]
+)
 
 api_router.include_router(
     conversations.router,

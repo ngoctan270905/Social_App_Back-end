@@ -93,12 +93,26 @@ async def create_indexes():
 
         # Unique Index cho public_id (Map với Cloudinary)
         # Giúp tìm nhanh media trong DB nếu có webhook từ Cloudinary hoặc check trùng
-        await media_col.create_index("public_id", unique=True)
-        logger.info("  - Đã tạo unique index cho 'public_id'")
+        await media_col.create_index("public_id", unique=True, sparse=True)
+        logger.info("  - Đã tạo unique sparse index cho 'public_id'")
 
         # Index cho created_at (Để quét và xóa file rác cũ)
         await media_col.create_index([("created_at", pymongo.DESCENDING)])
         logger.info("  - Đã tạo index cho 'created_at'")
+
+        # ==========================================
+        # 6. Collection: comments
+        # ==========================================
+        logger.info("Đang xử lý collection: comments")
+        comments_col = db.get_collection("comments")
+
+        # Index cho comment gốc của bài viết (Root Comments)
+        await comments_col.create_index([("post_id", pymongo.ASCENDING), ("parent_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index (post_id, parent_id, created_at) cho Root Comments")
+
+        # Index cho replies của 1 comment
+        await comments_col.create_index([("parent_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index (parent_id, created_at) cho Replies")
 
 
         logger.info("=" * 50)

@@ -7,6 +7,7 @@ from app.repositories.media_repository import MediaRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.token_repository import TokenRepository
+from app.repositories.comment_repository import CommentRepository
 from app.services.auth_service import AuthService
 from app.services.conversation_service import ConversationService
 from app.services.media_service import MediaService
@@ -17,6 +18,7 @@ from app.services.upload_service import UploadService
 from app.services.user_profile_service import UserProfileService
 from app.services.user_service import UserService
 from app.services.token_service import TokenService
+from app.services.comment_service import CommentService
 from app.core.redis_client import get_redis_client
 import redis.asyncio as redis
 
@@ -40,6 +42,9 @@ def get_user_repository() -> UserRepository:
 
 def get_token_repository() -> TokenRepository:
     return TokenRepository()
+
+def get_comment_repository() -> CommentRepository:
+    return CommentRepository()
 
 def get_token_service(
     token_repo: Annotated[TokenRepository, Depends(get_token_repository)]
@@ -96,3 +101,16 @@ def get_message_service() -> MessageService:
     conversation_service = get_conversation_service()
     conversation_repo = get_conversation_repository()
     return MessageService(message_repo=message_repo, conversation_service=conversation_service, conversation_repo=conversation_repo)
+
+def get_comment_service(
+    comment_repo: Annotated[CommentRepository, Depends(get_comment_repository)],
+    post_repo: Annotated[PostRepository, Depends(get_post_repository)],
+    user_profile_repo: Annotated[UserProfileRepository, Depends(get_user_profile_repository)],
+    media_repo: Annotated[MediaRepository, Depends(get_media_repository)],
+) -> CommentService:
+    return CommentService(
+        comment_repo=comment_repo,
+        post_repo=post_repo,
+        user_profile_repo=user_profile_repo,
+        media_repo=media_repo
+    )

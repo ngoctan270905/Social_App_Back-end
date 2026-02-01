@@ -6,6 +6,8 @@ from typing import List, Optional, Dict, Any
 
 from app.exceptions.post import NotFoundError, ForbiddenError
 
+from app.core.config import settings
+
 from app.repositories.media_repository import MediaRepository
 from app.repositories.posts_repository import PostRepository
 from app.repositories.user_profile_repository import UserProfileRepository
@@ -18,15 +20,14 @@ from app.services.media_service import MediaService
 
 class PostService:
     def __init__(self, post_repo: PostRepository,
-                       media_service: MediaService,
-                       user_profile_repo: UserProfileRepository,
-                       media_repo: MediaRepository):
+                 media_service: MediaService,
+                 user_profile_repo: UserProfileRepository,
+                 media_repo: MediaRepository):
 
         self.post_repo = post_repo
         self.media_service = media_service
         self.user_profile_repo = user_profile_repo
         self.media_repo = media_repo
-
 
     # Logic lấy danh sách bài viết và phân trang =======================================================================
     async def get_all_posts(
@@ -35,7 +36,7 @@ class PostService:
             limit: int = 5
     ) -> PaginatedPostsResponse:
 
-        #1. Lấy danh sách bài viết
+        # 1. Lấy danh sách bài viết
         posts = await self.post_repo.get_all_posts(cursor=cursor, limit=limit + 1)
 
         # Check xem còn bài nữa không
@@ -61,6 +62,8 @@ class PostService:
         for avatar in avatars:
             key = str(avatar["_id"])
             value = avatar["url"]
+            if value and not value.startswith("http"):
+                value = f"{settings.SERVER_BASE_URL}/{value.lstrip('/')}"
             avatar_map[key] = value
 
         # 5. Map thông tin user kèm url avatar
@@ -88,10 +91,14 @@ class PostService:
         media_map = {}
         for media in medias:
             media_id = media["_id"]
+            url = media["url"]
+            if url and not url.startswith("http"):
+                url = f"{settings.SERVER_BASE_URL}/{url.lstrip('/')}"
+
             public_media = MediaPublic(
                 id=media_id,
                 type=media["type"],
-                url=media["url"]
+                url=url
             )
             media_map[media_id] = public_media
 
@@ -125,16 +132,15 @@ class PostService:
             )
         )
 
-
     # Logic xem chi tiết 1 bài viết ====================================================================================
     async def get_detail_post(self, post_id: str) -> PostDetailResponse:
 
-        #1. Lấy bài viết
+        # 1. Lấy bài viết
         post = await self.post_repo.get_by_id(post_id)
         if not post:
             raise NotFoundError()
 
-        #2. Lấy thông tin của tác giả
+        # 2. Lấy thông tin của tác giả
         author = await self.user_profile_repo.get_by_user_id(post["user_id"])
 
         # 3. Lấy avatar
@@ -144,18 +150,27 @@ class PostService:
             avatar_media = await self.media_repo.get_by_id(avatar_id)
             if avatar_media:
                 avatar_url = avatar_media["url"]
+                if avatar_url and not avatar_url.startswith("http"):
+                    avatar_url = f"{settings.SERVER_BASE_URL}/{avatar_url.lstrip('/')}"
 
-        #4. Lấy thông tin author
+        # 4. Lấy thông tin author
         author = UserPublic(id=author["user_id"], display_name=author["display_name"], avatar=avatar_url)
+        print(f"author: {author}")
 
-        #5 Lấy media của bài viết
+        # 5 Lấy media của bài viết
         media_items = []
         media_ids = post.get("media_ids", [])
         if media_ids:
             medias = await self.media_repo.get_by_ids(media_ids)
             if medias:
                 for media in medias:
-                    media_items.append(MediaPublic(id=media["_id"], type=media["type"], url=media["url"]))
+                    url = media["url"]
+                    if url and not url.startswith("http"):
+                        if not url.startswith("image/") and not url.startswith("video/"):
+                            url = f"image/{url.lstrip('/')}"
+                        url = f"{settings.SERVER_BASE_URL}/{url.lstrip('/')}"
+
+                    media_items.append(MediaPublic(id=media["_id"], type=media["type"], url=url))
 
         return PostDetailResponse(
             _id=post["_id"],
@@ -166,22 +181,21 @@ class PostService:
             created_at=post["created_at"],
         )
 
-
     # Logic thêm bài viết mới ==========================================================================================
     async def create_post(self,
                           post_data: PostCreate,
                           files: Optional[List[UploadFile]],
                           user_id: str
-    ) -> PostCreateResponse:
+                          ) -> PostCreateResponse:
 
-        #1. Map từ Pydantic object sang dict
+        # 1. Map từ Pydantic object sang dict
         post_dict = post_data.model_dump()
 
         medias = []
 
         # Upload media nếu có
         if files:
-            medias = await self.media_service.upload_many_media_and_save(files=files,folder="posts")
+            medias = await self.media_service.upload_many_media_and_save(files=files, folder="posts")
             post_dict["media_ids"] = [ObjectId(m.id) for m in medias]
         else:
             post_dict["media_ids"] = []
@@ -198,7 +212,7 @@ class PostService:
         post = await self.post_repo.create(post_dict)
 
         media_public = [
-            MediaPublic(id=m.id,type=m.type,url=m.url,)
+            MediaPublic(id=m.id, type=m.type, url=m.url, )
             for m in medias
         ]
 
@@ -210,7 +224,6 @@ class PostService:
             media=media_public,
             created_at=post["created_at"]
         )
-
 
     # Logic update post ================================================================================================
     async def update_post(
@@ -267,10 +280,14 @@ class PostService:
         media_public = []
         if final_media_ids:
             medias = await self.media_repo.get_by_ids(final_media_ids)
-            media_public = [
-                MediaPublic(id=str(m["_id"]),type=m["type"],url=m["url"])
-                for m in medias
-            ]
+            for m in medias:
+                url = m["url"]
+                if url and not url.startswith("http"):
+                    if not url.startswith("image/") and not url.startswith("video/"):
+                        url = f"image/{url.lstrip('/')}"
+                    url = f"{settings.SERVER_BASE_URL}/{url.lstrip('/')}"
+
+                media_public.append(MediaPublic(id=str(m["_id"]), type=m["type"], url=url))
 
         return PostCreateResponse(
             _id=post["_id"],
@@ -334,15 +351,21 @@ class PostService:
 
         # 3. Lấy thông tin user và gom id avatar
         users = await self.user_profile_repo.get_public_by_ids(author_ids)
+        print(f"user: {users}")
         avatar_ids = [user.get("avatar") for user in users if user.get("avatar")]
+        print(f"test {avatar_ids}")
 
         # 4. Lấy thông tin media cho các avatar
         avatars = await self.media_repo.get_by_ids(avatar_ids)
+        print(f"avatar: {avatars}")
         avatar_map = {}
         for avatar in avatars:
             key = str(avatar["_id"])
             value = avatar["url"]
+            if value and not value.startswith("http"):
+                value = f"{settings.SERVER_BASE_URL}/{value.lstrip('/')}"
             avatar_map[key] = value
+        print(f"avatar {avatar_map}")
 
         # 5. Map thông tin user kèm url avatar
         user_map = {}
@@ -355,6 +378,7 @@ class PostService:
                 avatar=avatar_map.get(str(avatar_id)) if avatar_id else None,
             )
             user_map[uid] = public_user
+        print(f"usermap {user_map}")
 
         # 6. Gom danh sách id của media trong bài viết
         media_ids = []
@@ -364,15 +388,20 @@ class PostService:
 
         # 7. Lấy thông tin media
         medias = await self.media_repo.get_by_ids(media_ids)
+        print(f"media {medias}")
 
         # 8. Map media
         media_map = {}
         for media in medias:
             media_id = media["_id"]
+            url = media["url"]
+            if url and not url.startswith("http"):
+                url = f"{settings.SERVER_BASE_URL}/{url.lstrip('/')}"
+
             public_media = MediaPublic(
                 id=media_id,
                 type=media["type"],
-                url=media["url"]
+                url=url
             )
             media_map[media_id] = public_media
 
@@ -380,12 +409,14 @@ class PostService:
         responses = []
         for post in posts:
             author = user_map.get(post["user_id"])
+            print(f"author: {author}")
 
             post_medias = []
             for media_id in post.get("media_ids", []):
                 media = media_map.get(media_id)
                 if media:
                     post_medias.append(media)
+            print(f"ảnh {post_medias}")
 
             responses.append(PostsListResponse(
                 _id=post["_id"],

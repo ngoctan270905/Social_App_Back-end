@@ -47,7 +47,7 @@ class UserProfileService:
             avatar=MediaPublic(
                 id=media["_id"],
                 type=media["type"],
-                url=f"{settings.SERVER_BASE_URL}/image/{media['url']}"
+                url=f"{settings.SERVER_BASE_URL}/{media['url']}"
             )
         )
 
@@ -70,7 +70,7 @@ class UserProfileService:
             cover=MediaPublic(
                 id=media["_id"],
                 type=media["type"],
-                url=f"{settings.SERVER_BASE_URL}/image/{media['url']}"
+                url=f"{settings.SERVER_BASE_URL}/{media['url']}"
             )
         )
 
@@ -89,7 +89,7 @@ class UserProfileService:
                 avatar_public = MediaPublic(
                     id = media["_id"],
                     type = media["type"],
-                    url = f"{settings.SERVER_BASE_URL}/image/{media['url']}"
+                    url = f"{settings.SERVER_BASE_URL}/{media['url']}"
                 )
 
         cover_public = None
@@ -99,7 +99,7 @@ class UserProfileService:
                 cover_public = MediaPublic(
                     id=media["_id"],
                     type=media["type"],
-                    url=f"{settings.SERVER_BASE_URL}/image/{media['url']}"
+                    url=f"{settings.SERVER_BASE_URL}/{media['url']}"
                 )
 
         return UserProfileDetail(

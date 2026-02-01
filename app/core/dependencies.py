@@ -61,13 +61,13 @@ async def get_current_user(
     if profile and profile.get("avatar"):
         media = await media_repo.get_by_id(profile["avatar"])
         if media and media.get("url"):
-            avatar_url = f"{settings.SERVER_BASE_URL}/image/{media.get('url')}"
+            avatar_url = f"{settings.SERVER_BASE_URL}/{media.get('url')}"
 
     cover_url = None
     if profile and profile.get("cover"):
         media = await media_repo.get_by_id(profile["cover"])
         if media and media.get("url"):
-            cover_url = f"{settings.SERVER_BASE_URL}/image/{media.get('url')}"
+            cover_url = f"{settings.SERVER_BASE_URL}/{media.get('url')}"
 
     full_user_data = {
         "_id": str(user["_id"]),

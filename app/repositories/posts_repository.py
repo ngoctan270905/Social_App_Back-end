@@ -76,3 +76,9 @@ class PostRepository:
         async for post in db_cursor:
             posts.append(post)
         return posts
+
+    async def increase_comment_count(self, post_id: str, amount: int = 1) -> None:
+        await self.collection.update_one(
+            {"_id": ObjectId(post_id)},
+            {"$inc": {"comments_count": amount}}
+        )
