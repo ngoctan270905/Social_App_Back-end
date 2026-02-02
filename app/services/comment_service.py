@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Optional, List
-
 from bson import ObjectId
 from app.exceptions.post import NotFoundError
 from app.repositories.comment_repository import CommentRepository
@@ -14,12 +13,9 @@ from app.services.notification_service import NotificationService
 
 
 class CommentService:
-    def __init__(
-        self,
-        comment_repo: CommentRepository,
-        post_repo: PostRepository,
-        user_profile_repo: UserProfileRepository,
-        media_repo: MediaRepository,
+    def __init__(self,
+        comment_repo: CommentRepository, post_repo: PostRepository,
+        user_profile_repo: UserProfileRepository, media_repo: MediaRepository,
         notification_service: NotificationService
     ):
         self.comment_repo = comment_repo
@@ -29,8 +25,8 @@ class CommentService:
         self.notification_service = notification_service
 
 
+    # Logic gửi bình luận cả rep =======================================================================================
     async def create_comment(self, user_id: str, data: CommentCreate) -> CommentResponse:
-        """ Gửi bình luận """
 
         post = await self.post_repo.get_by_id(data.post_id)
         if not post:
@@ -52,17 +48,20 @@ class CommentService:
         parent_comment = None
 
         if data.reply_to_comment_id:
+            # lấy comment đang rep
             parent_comment = await self.comment_repo.get_by_id(data.reply_to_comment_id)
             if not parent_comment:
                 raise NotFoundError()
 
             reply_to_comment_id_obj = ObjectId(data.reply_to_comment_id)
-            
+
+            # nếu comment rep có root _id
             if parent_comment.get("root_id"):
                 root_id_obj = parent_comment["root_id"]
             else:
                 root_id_obj = parent_comment["_id"]
-            
+
+            # Lấy user bị reply
             reply_to_user_id_obj = parent_comment.get("user_id")
             
             await self.comment_repo.set_has_replies(root_id_obj, True)
@@ -71,8 +70,8 @@ class CommentService:
         comment_dict["reply_to_comment_id"] = reply_to_comment_id_obj
         comment_dict["reply_to_user_id"] = reply_to_user_id_obj
 
-        new_comment = await self.comment_repo.create(comment_dict)
-        await self.post_repo.increase_comment_count(data.post_id)
+        new_comment = await self.comment_repo.create(comment_dict) # Lưu comment vào DB
+        await self.post_repo.increase_comment_count(data.post_id) # cập nhật số bình luận
         
         author_profile = await self.user_profile_repo.get_by_user_id(user_id)
         
@@ -91,12 +90,11 @@ class CommentService:
             avatar=avatar_url
         )
 
-        # --- START NOTIFICATION LOGIC (via NotificationService) ---
+        # Gửi thông báo reatime
         current_user_id = user_id
         
-        if data.reply_to_comment_id:
-            # It's a reply, notify the replied-to user
-            replied_to_user_id = reply_to_user_id_obj
+        if data.reply_to_comment_id: # nếu đang rep bình luận
+            replied_to_user_id = str(reply_to_user_id_obj)
             if replied_to_user_id != current_user_id:
                 await self.notification_service.create_and_send_notification(
                     recipient_id=replied_to_user_id,
@@ -109,8 +107,7 @@ class CommentService:
                         "root_id": str(root_id_obj),
                     }
                 )
-        else:
-            # It's a root comment, notify the post author
+        else: # nếu là bình luận gốc
             post_author_id = str(post.get("user_id"))
             if post_author_id != current_user_id:
                 await self.notification_service.create_and_send_notification(
@@ -123,7 +120,6 @@ class CommentService:
                         "comment_id": str(new_comment['_id']),
                     }
                 )
-        # --- END NOTIFICATION LOGIC ---
 
         return CommentResponse(
             _id=str(new_comment["_id"]),
@@ -145,13 +141,13 @@ class CommentService:
         if not comments:
             return []
 
-        # Lấy thông tin người nhắn (Reusable block)
+        # Lấy thông tin người nhắn
         user_ids = [c["user_id"] for c in comments]
         users = await self.user_profile_repo.get_public_by_ids(user_ids)
         
-        # Lấy avatars (Reusable block)
+        # Lấy avatars
         avatar_ids = [user.get("avatar") for user in users if user.get("avatar")]
-        avatars = await self.media_repo.get_by_ids(avatar_ids) if avatar_ids else [] # Handle empty avatar_ids
+        avatars = await self.media_repo.get_by_ids(avatar_ids) if avatar_ids else []
         
         avatar_map = {}
         for avatar in avatars:
@@ -175,7 +171,6 @@ class CommentService:
         for c in comments:
             author = user_map.get(c["user_id"])
             if not author:
-                # Handle case where author info is not found
                 author = UserPublic(id=str(c["user_id"]), display_name="Unknown", avatar=None)
 
             response.append(CommentResponse(

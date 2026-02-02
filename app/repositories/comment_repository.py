@@ -14,8 +14,7 @@ class CommentRepository:
         return comment_data
 
 
-
-    # Lấy bình luận gốc trong post (Cũ nhất trước, hỗ trợ cursor)
+    # Lấy bình luận gốc trong post =====================================================================================
     async def get_root_comments(self, post_id: str, limit: int = 10, cursor: Optional[str] = None) -> List[Dict[str, Any]]:
         query = {
             "post_id": ObjectId(post_id),
@@ -32,13 +31,13 @@ class CommentRepository:
 
         return comments
 
-    # Lấy danh sách phản hồi của một bình luận (trong một luồng, cũ nhất trước)
+
+    # Lấy danh sách phản hồi của một bình luận =========================================================================
     async def get_replies(self, root_id: str, limit: int = 10, cursor: Optional[str] = None) -> List[Dict[str, Any]]:
         query = {"root_id": ObjectId(root_id)}
         if cursor:
             query["_id"] = {"$gt": ObjectId(cursor)}
-        
-        # Replies should be sorted ascending by _id to appear in chronological order within a thread
+
         cursor_obj = self.collection.find(query).sort("_id", 1).limit(limit)
 
         replies = []
@@ -48,12 +47,18 @@ class CommentRepository:
         return replies
 
 
-
+    # Cập nhật comment gốc nếu có rep ==================================================================================
     async def set_has_replies(self, comment_id: str, value: bool = True) -> None:
         await self.collection.update_one(
-            {"_id": ObjectId(comment_id)},
-            {"$set": {"has_replies": value}}
+            {
+                "_id": comment_id,
+                "has_replies": {"$ne": True}
+            },
+            {
+                "$set": {"has_replies": value}
+            }
         )
+
 
     # Tìm comment theo ID ==============================================================================================
     async def get_by_id(self, comment_id: str) -> Optional[Dict[str, Any]]:
