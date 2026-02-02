@@ -8,6 +8,7 @@ from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.token_repository import TokenRepository
 from app.repositories.comment_repository import CommentRepository
+from app.repositories.notification_repository import NotificationRepository
 from app.services.auth_service import AuthService
 from app.services.conversation_service import ConversationService
 from app.services.media_service import MediaService
@@ -46,6 +47,9 @@ def get_token_repository() -> TokenRepository:
 def get_comment_repository() -> CommentRepository:
     return CommentRepository()
 
+def get_notification_repository() -> NotificationRepository:
+    return NotificationRepository()
+
 def get_token_service(
     token_repo: Annotated[TokenRepository, Depends(get_token_repository)]
 ) -> TokenService:
@@ -71,8 +75,10 @@ def get_post_service() -> PostService:
     user_profile_repo = get_user_profile_repository()
     return PostService(post_repo=post_repo,media_service=media_service, user_profile_repo=user_profile_repo, media_repo=media_repo)
 
-def get_notification_service() -> NotificationService:
-    return NotificationService()
+def get_notification_service(
+    notification_repo: Annotated[NotificationRepository, Depends(get_notification_repository)]
+) -> NotificationService:
+    return NotificationService(notification_repo=notification_repo)
 
 def get_upload_service() -> UploadService:
     return UploadService()
@@ -107,10 +113,12 @@ def get_comment_service(
     post_repo: Annotated[PostRepository, Depends(get_post_repository)],
     user_profile_repo: Annotated[UserProfileRepository, Depends(get_user_profile_repository)],
     media_repo: Annotated[MediaRepository, Depends(get_media_repository)],
+    notification_service: Annotated[NotificationService, Depends(get_notification_service)],
 ) -> CommentService:
     return CommentService(
         comment_repo=comment_repo,
         post_repo=post_repo,
         user_profile_repo=user_profile_repo,
-        media_repo=media_repo
+        media_repo=media_repo,
+        notification_service=notification_service
     )
