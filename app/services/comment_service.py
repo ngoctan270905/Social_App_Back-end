@@ -28,8 +28,10 @@ class CommentService:
         self.media_repo = media_repo
         self.notification_service = notification_service
 
-    # Logic thêm bình luận =============================================================================================
+
     async def create_comment(self, user_id: str, data: CommentCreate) -> CommentResponse:
+        """ Gửi bình luận """
+
         post = await self.post_repo.get_by_id(data.post_id)
         if not post:
             raise NotFoundError()
@@ -43,6 +45,7 @@ class CommentService:
             "updated_at": datetime.utcnow()
         }
 
+        # Tạo biến xử lí cho Phản hồi tin nhắn
         root_id_obj = None
         reply_to_comment_id_obj = None
         reply_to_user_id_obj = None
@@ -51,7 +54,7 @@ class CommentService:
         if data.reply_to_comment_id:
             parent_comment = await self.comment_repo.get_by_id(data.reply_to_comment_id)
             if not parent_comment:
-                raise NotFoundError(f"Parent comment with ID {data.reply_to_comment_id} not found.")
+                raise NotFoundError()
 
             reply_to_comment_id_obj = ObjectId(data.reply_to_comment_id)
             
