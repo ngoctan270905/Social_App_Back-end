@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from datetime import datetime
 from typing import AsyncGenerator, Dict, Any
 
 from fastapi import Request
@@ -29,12 +30,13 @@ class NotificationService:
         Lưu thông báo vào DB và gửi real-time notification qua WebSocket.
         """
         # 1. Tạo và lưu notification vào DB
-        print(f"testttt {recipient_id}")
         notification_to_create = NotificationCreate(
             recipient_id=recipient_id,
             actor=actor,
             type=type,
-            entity_ref=entity_ref
+            message=message,
+            entity_ref=entity_ref,
+            created_at=datetime.utcnow()
         )
         await self.notification_repo.create(notification_to_create.model_dump())
 
@@ -64,38 +66,56 @@ class NotificationService:
             limit=limit,
             cursor=cursor
         )
-        return [Notification.model_validate(n) for n in notifications_data]
+        notifications: list[Notification] = []
+
+        for notification_doc in notifications_data:
+            notification = Notification(
+                _id = str(notification_doc["_id"]),
+                recipient_id = notification_doc["recipient_id"],
+                actor = notification_doc["actor"],
+                type = notification_doc["type"],
+                message = notification_doc["message"],
+                is_read = notification_doc.get("is_read", False),
+                entity_ref = notification_doc["entity_ref"],
+                created_at = notification_doc["created_at"]
+            )
+            notifications.append(notification)
+
+        return notifications
+
+
+
 
     # =================================================================
     # LEGACY SSE METHODS (Not used for new comment notifications)
     # =================================================================
-    async def notification_generator(self, request: Request) -> AsyncGenerator[str, None]:
-        """
-        Hàm sinh dữ liệu SSE chuẩn.
-        """
-        yield ": ping\n\n"
-        
-        # This part is for SSE and uses a different NotificationResponse schema
-        # For now, we leave it as is.
-        welcome_notification_data = {
-            "title": "Kết nối thành công",
-            "message": "Chào bạn",
-            "type": "success"
-        }
-        yield self._format_sse(welcome_notification_data)
-
-        try:
-            while True:
-                if await request.is_disconnected():
-                    logger.info("Client SSE đã ngắt kết nối.")
-                    break
-                await asyncio.sleep(15)
-                yield ": heartbeat\n\n"
-        except asyncio.CancelledError:
-            logger.info("Stream SSE bị hủy.")
-        except Exception as e:
-            logger.error(f"Lỗi Stream SSE: {e}")
-
-    def _format_sse(self, data: dict) -> str:
-        json_data = json.dumps(data)
-        return f"data: {json_data}\n\n"
+    # async def notification_generator(self, request: Request) -> AsyncGenerator[str, None]:
+    #     """
+    #     Hàm sinh dữ liệu SSE chuẩn.
+    #     """
+    #     yield ": ping\n\n"
+    #
+    #     # This part is for SSE and uses a different NotificationResponse schema
+    #     # For now, we leave it as is.
+    #     welcome_notification_data = {
+    #         "title": "Kết nối thành công",
+    #         "message": "Chào bạn",
+    #         "type": "success"
+    #     }
+    #     yield self._format_sse(welcome_notification_data)
+    #
+    #     try:
+    #         while True:
+    #             if await request.is_disconnected():
+    #                 logger.info("Client SSE đã ngắt kết nối.")
+    #                 break
+    #             await asyncio.sleep(15)
+    #             yield ": heartbeat\n\n"
+    #     except asyncio.CancelledError:
+    #         logger.info("Stream SSE bị hủy.")
+    #     except Exception as e:
+    #         logger.error(f"Lỗi Stream SSE: {e}")
+    #
+    # def _format_sse(self, data: dict) -> str:
+    #     json_data = json.dumps(data)
+    #     return f"data: {json_data}\n\n"

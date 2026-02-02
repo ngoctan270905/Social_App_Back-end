@@ -21,11 +21,7 @@ async def get_my_notifications(
     service: NotificationService = Depends(get_notification_service)
 ):
     """
-    Lấy danh sách thông báo cho người dùng đã đăng nhập, sắp xếp theo thứ tự mới nhất.
+    Lấy danh sách thông báo cho người dùng.
     """
-    user_id = str(current_user["_id"])
-    notifications = await service.get_notifications_for_user(user_id=user_id, limit=limit, cursor=cursor)
-    return ResponseModel(
-        data=notifications,
-        message="Lấy danh sách thông báo thành công."
-    )
+    notifications = await service.get_notifications_for_user(user_id=current_user["_id"], limit=limit, cursor=cursor)
+    return ResponseModel(data=notifications)

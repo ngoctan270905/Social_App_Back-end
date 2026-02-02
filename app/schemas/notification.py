@@ -16,11 +16,12 @@ class NotificationBase(BaseModel):
     recipient_id: ObjectIdStr
     actor: UserPublic
     type: str
+    message: str
     is_read: bool = False
     entity_ref: Dict[str, ObjectIdStr]
     
 class NotificationCreate(NotificationBase):
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime
 
 class Notification(NotificationBase):
     id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")

@@ -99,7 +99,7 @@ class CommentService:
                     recipient_id=replied_to_user_id,
                     actor=author_public,
                     type="NEW_REPLY",
-                    message=f"{author_public.display_name} đã trả lời bình luận của bạn.",
+                    message=f"đã trả lời bình luận của bạn.",
                     entity_ref={
                         "post_id": data.post_id,
                         "comment_id": str(new_comment['_id']),
@@ -114,7 +114,7 @@ class CommentService:
                     recipient_id=post_author_id,
                     actor=author_public,
                     type="NEW_COMMENT",
-                    message=f"{author_public.display_name} đã bình luận về bài viết của bạn.",
+                    message=f" đã bình luận về bài viết của bạn.",
                     entity_ref={
                         "post_id": str(data.post_id),
                         "comment_id": str(new_comment['_id']),
