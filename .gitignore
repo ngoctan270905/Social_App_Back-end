@@ -36,3 +36,35 @@ htmlcov/
 
 # Docker
 *.env.dev
+
+# ======================
+# Uploaded images / videos (DO NOT COMMIT)
+# ======================
+
+# Common upload folders
+uploads/
+upload/
+media/
+storage/
+public/uploads/
+public/media/
+
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.bmp
+*.tiff
+*.svg
+
+# Videos
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.flv
+*.wmv
+

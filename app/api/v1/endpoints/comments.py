@@ -37,30 +37,30 @@ async def create_comment(
     response_model=ResponseModel[List[CommentResponse]],
     summary="Lấy danh sách bình luận"
 )
-async def get_comments(
+async def get_root_comments_for_post(
     post_id: str,
     limit: int = Query(default=10, le=100),
     cursor: Optional[str] = Query(None),
     service: CommentService = Depends(get_comment_service)
 ):
-    comments = await service.get_comments_by_post(post_id, limit, cursor)
+    comments = await service.get_root_comments_for_post(post_id, limit, cursor)
     return ResponseModel(
         data=comments,
-        message="Lấy danh sách bình luận thành công"
+        message="Lấy danh sách bình luận gốc thành công"
     )
 
 @router.get(
-    "/{comment_id}/replies",
+    "/{root_comment_id}/replies",
     response_model=ResponseModel[List[CommentResponse]],
-    summary="Lấy danh sách phản hồi của bình luận"
+    summary="Lấy danh sách phản hồi của một luồng bình luận"
 )
-async def get_replies(
-    comment_id: str,
+async def get_replies_for_comment_thread(
+    root_comment_id: str,
     limit: int = Query(default=10, le=100),
     cursor: Optional[str] = Query(None),
     service: CommentService = Depends(get_comment_service)
 ):
-    replies = await service.get_replies_by_comment(comment_id, limit, cursor)
+    replies = await service.get_replies_for_comment_thread(root_comment_id, limit, cursor)
     return ResponseModel(
         data=replies,
         message="Lấy danh sách phản hồi thành công"

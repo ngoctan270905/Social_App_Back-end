@@ -7,17 +7,19 @@ from app.schemas.posts import UserPublic
 
 # =========== REQUEST DTO ==============================================================================================
 class CommentCreate(BaseModel):
-    post_id: str = Field(...)
+    post_id: ObjectIdStr = Field(...)
     content: str = Field(..., max_length=1000)
-    parent_id: Optional[str] = None
+    reply_to_comment_id: Optional[ObjectIdStr] = None
 
 
 # ================ RESPONSE DTO ========================================================================================
 class CommentResponse(BaseModel):
     id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
     post_id: ObjectIdStr
-    parent_id: Optional[ObjectIdStr] = None
+    root_id: Optional[ObjectIdStr] = None
+    reply_to_comment_id: Optional[ObjectIdStr] = None
+    reply_to_user_id: Optional[ObjectIdStr] = None
     content: str
+    has_replies: bool = False
     author: UserPublic
     created_at: datetime
-    reply_count: int = 0

@@ -106,13 +106,15 @@ async def create_indexes():
         logger.info("Đang xử lý collection: comments")
         comments_col = db.get_collection("comments")
 
-        # Index cho comment gốc của bài viết (Root Comments)
-        await comments_col.create_index([("post_id", pymongo.ASCENDING), ("parent_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
-        logger.info("  - Đã tạo compound index (post_id, parent_id, created_at) cho Root Comments")
+        # Index 1: Lấy comment gốc của post
+        # Query: {post_id: <id>, root_id: null} sort by created_at DESC
+        await comments_col.create_index([("post_id", pymongo.ASCENDING), ("root_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index ({post_id: 1, root_id: 1, created_at: -1}) cho comment gốc")
 
-        # Index cho replies của 1 comment
-        await comments_col.create_index([("parent_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
-        logger.info("  - Đã tạo compound index (parent_id, created_at) cho Replies")
+        # Index 2: Lấy replies của 1 comment (trong một luồng)
+        # Query: {root_id: <id>} sort by created_at ASC
+        await comments_col.create_index([("root_id", pymongo.ASCENDING), ("created_at", pymongo.ASCENDING)])
+        logger.info("  - Đã tạo compound index ({root_id: 1, created_at: 1}) cho replies trong luồng")
 
 
         logger.info("=" * 50)
