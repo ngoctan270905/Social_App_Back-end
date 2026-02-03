@@ -6,7 +6,7 @@ from app.repositories.comment_repository import CommentRepository
 from app.repositories.posts_repository import PostRepository
 from app.repositories.user_profile_repository import UserProfileRepository
 from app.repositories.media_repository import MediaRepository
-from app.schemas.comment import CommentCreate, CommentResponse
+from app.schemas.comment import CommentCreate, CommentResponse, UserReply, CommentCreateResponse, CommentReplyResponse
 from app.schemas.posts import UserPublic
 from app.core.config import settings
 from app.services.notification_service import NotificationService
@@ -26,7 +26,7 @@ class CommentService:
 
 
     # Logic gửi bình luận cả rep =======================================================================================
-    async def create_comment(self, user_id: str, data: CommentCreate) -> CommentResponse:
+    async def create_comment(self, user_id: str, data: CommentCreate) -> CommentCreateResponse:
 
         post = await self.post_repo.get_by_id(data.post_id)
         if not post:
@@ -90,6 +90,19 @@ class CommentService:
             avatar=avatar_url
         )
 
+        reply_to_user = None
+
+        if reply_to_user_id_obj:
+            reply_user_profile = await self.user_profile_repo.get_by_user_id(
+                str(reply_to_user_id_obj)
+            )
+
+            if reply_user_profile:
+                reply_to_user = UserReply(
+                    id=str(reply_to_user_id_obj),
+                    display_name=reply_user_profile.get("display_name", "Unknown")
+                )
+
         # Gửi thông báo reatime
         current_user_id = user_id
         
@@ -119,12 +132,12 @@ class CommentService:
                     }
                 )
 
-        return CommentResponse(
+        return CommentCreateResponse(
             _id=str(new_comment["_id"]),
             post_id=str(new_comment["post_id"]),
             root_id=str(new_comment["root_id"]) if new_comment.get("root_id") else None,
             reply_to_comment_id=str(new_comment["reply_to_comment_id"]) if new_comment.get("reply_to_comment_id") else None,
-            reply_to_user_id=str(new_comment["reply_to_user_id"]) if new_comment.get("reply_to_user_id") else None,
+            reply_to_user=reply_to_user,
             content=new_comment["content"],
             has_replies=new_comment.get("has_replies", False),
             author=author_public,
@@ -173,10 +186,10 @@ class CommentService:
 
             response.append(CommentResponse(
                 _id=str(c["_id"]),
-                post_id=str(c["post_id"]),
-                root_id=str(c["root_id"]) if c.get("root_id") else None,
-                reply_to_comment_id=str(c["reply_to_comment_id"]) if c.get("reply_to_comment_id") else None,
-                reply_to_user_id=str(c["reply_to_user_id"]) if c.get("reply_to_user_id") else None,
+                # post_id=str(c["post_id"]),
+                # root_id=str(c["root_id"]) if c.get("root_id") else None,
+                # reply_to_comment_id=str(c["reply_to_comment_id"]) if c.get("reply_to_comment_id") else None,
+                # reply_to_user_id=str(c["reply_to_user_id"]) if c.get("reply_to_user_id") else None,
                 content=c["content"],
                 has_replies=c.get("has_replies", False),
                 author=author,
@@ -185,50 +198,78 @@ class CommentService:
             
         return response
 
-    async def get_replies_for_comment_thread(self, root_comment_id: str, limit: int = 10, cursor: Optional[str] = None) -> List[CommentResponse]:
-        replies = await self.comment_repo.get_replies(root_comment_id, limit, cursor)
 
+    async def get_replies_for_comment_thread(self, root_comment_id: str, limit: int = 10,
+                                             cursor: Optional[str] = None) -> List[CommentReplyResponse]:
+        print(f"đi vàoddaaay ")
+        replies = await self.comment_repo.get_replies(root_comment_id, limit, cursor)
+        print(f"test tử {len(replies)}")
         if not replies:
             return []
 
-        # Lấy thông tin người nhắn (Reusable block)
-        user_ids = [r["user_id"] for r in replies]
-        users = await self.user_profile_repo.get_public_by_ids(user_ids)
+        # Gộp tất cả user_ids cần lấy
+        all_user_ids = set()
+        for rep in replies:
+            all_user_ids.add(rep["user_id"])  # người rep
+            if rep.get("reply_to_user_id"):
+                all_user_ids.add(rep["reply_to_user_id"])
+        print(f" danh sách {all_user_ids}")
 
-        # Lấy avatars (Reusable block)
+        # Chỉ cần 1 query duy nhất cho tất cả users
+        users = await self.user_profile_repo.get_public_by_ids(list(all_user_ids))
+
+        # Lấy avatars
         avatar_ids = [user.get("avatar") for user in users if user.get("avatar")]
         avatars = await self.media_repo.get_by_ids(avatar_ids) if avatar_ids else []
 
         avatar_map = {}
         for avatar in avatars:
-             url = avatar["url"]
-             if url and not url.startswith("http"):
-                 url = f"{settings.SERVER_BASE_URL}/{url.lstrip('/')}"
-             avatar_map[str(avatar["_id"])] = url
+            url = avatar["url"]
+            if url and not url.startswith("http"):
+                url = f"{settings.SERVER_BASE_URL}/{url.lstrip('/')}"
+            avatar_map[str(avatar["_id"])] = url
 
+        # map
         user_map = {}
         for user in users:
-            uid = user["user_id"]
+            uid = str(user["user_id"])
             avatar_id = user.get("avatar")
-            user_map[uid] = UserPublic(
-                id=str(uid),
-                display_name=user.get("display_name", "Unknown"),
-                avatar=avatar_map.get(str(avatar_id))
-            )
+            user_map[uid] = {
+                "id": uid,
+                "display_name": user.get("display_name", "Unknown"),
+                "avatar": avatar_map.get(str(avatar_id))
+            }
+        print(f"user map {user_map}")
 
-        # Tạo reponse trả về
+        # Tạo response
         response = []
         for r in replies:
-            author = user_map.get(r["user_id"])
-            if not author:
-                author = UserPublic(id=str(r["user_id"]), display_name="Unknown", avatar=None)
+            author_id = str(r["user_id"])
+            print(f" kadm {author_id}")
+            author_data = user_map.get(author_id)
 
-            response.append(CommentResponse(
+            if author_data:
+                author = UserPublic(**author_data)
+            else:
+                author = UserPublic(id=author_id, display_name="Unknown", avatar=None)
+
+            reply_to_user = None
+            reply_to_user_id = r.get("reply_to_user_id")
+
+            if reply_to_user_id:
+                reply_user_data = user_map.get(str(reply_to_user_id))
+                if reply_user_data:
+                    reply_to_user = UserReply(
+                        id=reply_user_data["id"],
+                        display_name=reply_user_data["display_name"]
+                    )
+
+            response.append(CommentReplyResponse(
                 _id=str(r["_id"]),
                 post_id=str(r["post_id"]),
                 root_id=str(r["root_id"]) if r.get("root_id") else None,
                 reply_to_comment_id=str(r["reply_to_comment_id"]) if r.get("reply_to_comment_id") else None,
-                reply_to_user_id=str(r["reply_to_user_id"]) if r.get("reply_to_user_id") else None,
+                reply_to_user=reply_to_user,
                 content=r["content"],
                 has_replies=r.get("has_replies", False),
                 author=author,
@@ -236,7 +277,3 @@ class CommentService:
             ))
 
         return response
-
-
-
-

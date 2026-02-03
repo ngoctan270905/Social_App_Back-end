@@ -2,7 +2,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, status, HTTPException, Query
 from app.api.deps import get_comment_service
 from app.core.dependencies import get_current_user
-from app.schemas.comment import CommentCreate, CommentResponse
+from app.schemas.comment import CommentCreate, CommentResponse, CommentCreateResponse, CommentReplyResponse
 from app.schemas.response import ResponseModel
 from app.services.comment_service import CommentService
 
@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.post(
     "/",
-    response_model=ResponseModel[CommentResponse],
+    response_model=ResponseModel[CommentCreateResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Thêm bình luận mới"
 )
@@ -19,18 +19,9 @@ async def create_comment(
     current_user: dict = Depends(get_current_user),
     service: CommentService = Depends(get_comment_service)
 ):
-    """
-    Tạo một bình luận mới cho bài viết.
-    """
-    new_comment = await service.create_comment(
-        user_id=str(current_user["_id"]),
-        data=data
-    )
+    new_comment = await service.create_comment(user_id=str(current_user["_id"]),data=data)
+    return ResponseModel(data=new_comment)
 
-    return ResponseModel(
-        data=new_comment,
-        message="Bình luận thành công"
-    )
 
 @router.get(
     "/{post_id}",
@@ -44,14 +35,12 @@ async def get_root_comments_for_post(
     service: CommentService = Depends(get_comment_service)
 ):
     comments = await service.get_root_comments_for_post(post_id, limit, cursor)
-    return ResponseModel(
-        data=comments,
-        message="Lấy danh sách bình luận gốc thành công"
-    )
+    return ResponseModel(data=comments)
+
 
 @router.get(
     "/{root_comment_id}/replies",
-    response_model=ResponseModel[List[CommentResponse]],
+    response_model=ResponseModel[List[CommentReplyResponse]],
     summary="Lấy danh sách phản hồi của một luồng bình luận"
 )
 async def get_replies_for_comment_thread(
@@ -60,8 +49,6 @@ async def get_replies_for_comment_thread(
     cursor: Optional[str] = Query(None),
     service: CommentService = Depends(get_comment_service)
 ):
+    print(f" đi vào đây")
     replies = await service.get_replies_for_comment_thread(root_comment_id, limit, cursor)
-    return ResponseModel(
-        data=replies,
-        message="Lấy danh sách phản hồi thành công"
-    )
+    return ResponseModel(data=replies)

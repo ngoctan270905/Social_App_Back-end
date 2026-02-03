@@ -38,21 +38,30 @@ class NotificationService:
         await self.notification_repo.create(notification_to_create.model_dump())
 
         # payload cho real-time
-        realtime_payload = NotificationResponse(
-            type=type,
-            message=message,
-            data={
-                "actor": actor.model_dump(),
-                **entity_ref
-            }
-        )
+        realtime_payload = {
+            "notification": NotificationResponse(
+                type=type,
+                message=message,
+                data={
+                    "actor": actor.model_dump(),
+                    **entity_ref
+                }
+            ).model_dump(),
+        }
 
         # bắn lên redis
         await manager.broadcast_via_redis(
             channel=NOTIFICATION_CHANNEL,
             target_user_ids=[recipient_id],
-            payload=realtime_payload.model_dump()
+            payload=realtime_payload
         )
+
+
+    # Đánh dấu thông báo đã đọc ========================================================================================
+    async def mark_notification_as_read(self, notification_id: str, user_id: str) -> bool:
+        marked = await self.notification_repo.mark_as_read(notification_id, user_id)
+        return marked
+
 
     # Lấy danh sách thông báo ==========================================================================================
     async def get_notifications_for_user(self, user_id: str, limit: int, cursor: str | None) -> list[Notification]:

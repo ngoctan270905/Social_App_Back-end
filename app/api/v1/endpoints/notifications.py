@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import get_notification_service
 from app.core.dependencies import get_current_user
@@ -20,5 +20,18 @@ async def get_my_notifications(
     cursor: Optional[str] = Query(None),
     service: NotificationService = Depends(get_notification_service)
 ):
-    notifications = await service.get_notifications_for_user(user_id=current_user["_id"], limit=limit, cursor=cursor)
+    notifications = await service.get_notifications_for_user(user_id=str(current_user["_id"]), limit=limit, cursor=cursor)
     return ResponseModel(data=notifications)
+
+@router.post(
+    "/{notification_id}/read",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Đánh dấu một thông báo là đã đọc"
+)
+async def mark_notification_as_read(
+    notification_id: str,
+    current_user: dict = Depends(get_current_user),
+    service: NotificationService = Depends(get_notification_service)
+):
+    await service.mark_notification_as_read(notification_id=notification_id, user_id=str(current_user["_id"]))
+    return None

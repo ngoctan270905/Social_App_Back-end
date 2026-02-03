@@ -13,12 +13,38 @@ class CommentCreate(BaseModel):
 
 
 # ================ RESPONSE DTO ========================================================================================
-class CommentResponse(BaseModel):
+class UserReply(BaseModel):
+    id: ObjectIdStr
+    display_name: str
+
+class CommentCreateResponse(BaseModel):
     id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
     post_id: ObjectIdStr
     root_id: Optional[ObjectIdStr] = None
     reply_to_comment_id: Optional[ObjectIdStr] = None
-    reply_to_user_id: Optional[ObjectIdStr] = None
+    reply_to_user: Optional[UserReply] = None
+    content: str
+    has_replies: bool = False
+    author: UserPublic
+    created_at: datetime
+
+class CommentResponse(BaseModel):
+    id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
+    # post_id: ObjectIdStr
+    # root_id: Optional[ObjectIdStr] = None
+    # reply_to_comment_id: Optional[ObjectIdStr] = None
+    # reply_to_user_id: Optional[ObjectIdStr] = None
+    content: str
+    has_replies: bool = False
+    author: UserPublic
+    created_at: datetime
+
+class CommentReplyResponse(BaseModel):
+    id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
+    post_id: ObjectIdStr
+    root_id: Optional[ObjectIdStr] = None
+    reply_to_comment_id: Optional[ObjectIdStr] = None
+    reply_to_user: Optional[UserReply] = None
     content: str
     has_replies: bool = False
     author: UserPublic

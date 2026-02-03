@@ -28,3 +28,10 @@ class NotificationRepository:
             docs.append(doc)
 
         return docs
+
+    async def mark_as_read(self, notification_id: str, recipient_id: str) -> bool:
+        result = await self.collection.update_one(
+            {"_id": ObjectId(notification_id), "recipient_id": recipient_id},
+            {"$set": {"is_read": True}}
+        )
+        return result.modified_count > 0
