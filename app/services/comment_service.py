@@ -94,10 +94,9 @@ class CommentService:
         current_user_id = user_id
         
         if data.reply_to_comment_id: # nếu đang rep bình luận
-            replied_to_user_id = str(reply_to_user_id_obj)
-            if replied_to_user_id != current_user_id:
+            if str(reply_to_user_id_obj) != current_user_id:
                 await self.notification_service.create_and_send_notification(
-                    recipient_id=replied_to_user_id,
+                    recipient_id=str(reply_to_user_id_obj),
                     actor=author_public,
                     type="NEW_REPLY",
                     message=f"đã trả lời bình luận của bạn.",
@@ -108,10 +107,9 @@ class CommentService:
                     }
                 )
         else: # nếu là bình luận gốc
-            post_author_id = str(post.get("user_id"))
-            if post_author_id != current_user_id:
+            if str(post.get("user_id")) != current_user_id:
                 await self.notification_service.create_and_send_notification(
-                    recipient_id=post_author_id,
+                    recipient_id=str(post.get("user_id")),
                     actor=author_public,
                     type="NEW_COMMENT",
                     message=f" đã bình luận về bài viết của bạn.",

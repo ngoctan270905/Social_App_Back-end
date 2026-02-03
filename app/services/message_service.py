@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from fastapi.encoders import jsonable_encoder
 
-from app.core.websocket import manager
+from app.core.websocket import manager, CHAT_CHANNEL
 from app.exceptions.post import ForbiddenError
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.message_repository import MessageRepository
@@ -49,7 +49,7 @@ class MessageService:
                 if user_id:
                     recipient_ids.append(str(user_id))
 
-            await manager.broadcast_via_redis(recipient_ids, payload)
+            await manager.broadcast_via_redis(CHAT_CHANNEL, recipient_ids, payload)
 
         return response_msg
 
@@ -116,6 +116,6 @@ class MessageService:
                 if user_id:
                     recipient_ids.append(str(user_id))
 
-            await manager.broadcast_via_redis(recipient_ids, payload)
+            await manager.broadcast_via_redis(CHAT_CHANNEL, recipient_ids, payload)
 
         return True

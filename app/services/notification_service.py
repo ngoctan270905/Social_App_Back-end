@@ -6,7 +6,7 @@ from typing import AsyncGenerator, Dict, Any
 
 from fastapi import Request
 
-from app.core.websocket import manager
+from app.core.websocket import manager, NOTIFICATION_CHANNEL
 from app.repositories.notification_repository import NotificationRepository
 from app.schemas.notification import Notification, NotificationCreate, NotificationResponse
 from app.schemas.posts import UserPublic
@@ -17,19 +17,16 @@ class NotificationService:
     def __init__(self, notification_repo: NotificationRepository):
         self.notification_repo = notification_repo
 
-    async def create_and_send_notification(
-        self,
-        *,
+
+    # Lưu thông báo vào DB và gửi real-time notification qua WebSocket =================================================
+    async def create_and_send_notification(self, *,
         recipient_id: str,
         actor: UserPublic,
         type: str,
         message: str,
         entity_ref: Dict[str, Any]
     ):
-        """
-        Lưu thông báo vào DB và gửi real-time notification qua WebSocket.
-        """
-        # 1. Tạo và lưu notification vào DB
+
         notification_to_create = NotificationCreate(
             recipient_id=recipient_id,
             actor=actor,
@@ -40,7 +37,7 @@ class NotificationService:
         )
         await self.notification_repo.create(notification_to_create.model_dump())
 
-        # 2. Chuẩn bị payload cho real-time
+        # payload cho real-time
         realtime_payload = NotificationResponse(
             type=type,
             message=message,
@@ -49,18 +46,17 @@ class NotificationService:
                 **entity_ref
             }
         )
-        
-        # 3. Phát sóng qua Redis để WebSocket manager xử lý
+
+        # bắn lên redis
         await manager.broadcast_via_redis(
+            channel=NOTIFICATION_CHANNEL,
             target_user_ids=[recipient_id],
             payload=realtime_payload.model_dump()
         )
 
+    # Lấy danh sách thông báo ==========================================================================================
     async def get_notifications_for_user(self, user_id: str, limit: int, cursor: str | None) -> list[Notification]:
-        """
-        Lấy danh sách thông báo cho một người dùng.
-        """
-        
+
         notifications_data = await self.notification_repo.get_by_recipient(
             recipient_id=user_id,
             limit=limit,
