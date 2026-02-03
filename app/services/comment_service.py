@@ -256,7 +256,7 @@ class CommentService:
             reply_to_user = None
             reply_to_user_id = r.get("reply_to_user_id")
 
-            if reply_to_user_id:
+            if reply_to_user_id and str(reply_to_user_id) != author_id:
                 reply_user_data = user_map.get(str(reply_to_user_id))
                 if reply_user_data:
                     reply_to_user = UserReply(
