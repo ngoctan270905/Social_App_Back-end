@@ -26,7 +26,7 @@ class NotificationService:
         message: str,
         entity_ref: Dict[str, Any]
     ):
-
+        print(f"hasasdahd{entity_ref}")
         notification_to_create = NotificationCreate(
             recipient_id=recipient_id,
             actor=actor,

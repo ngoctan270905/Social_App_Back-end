@@ -10,7 +10,7 @@ from app.core.config import settings
 import redis.asyncio as redis
 from app.services.blacklist_service import BlacklistService
 
-# Create context for password hashing
+# Cấu hình xử lí mật khẩu
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Hàm băm mật khẩu

@@ -104,6 +104,7 @@ class ConnectionManager:
             "target_user_ids": target_user_ids,
             "payload": payload
         }
+        print(f"Payloaf {payload}")
         await redis.publish(channel, json.dumps(message))
 
 manager = ConnectionManager()

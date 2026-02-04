@@ -33,7 +33,7 @@ class CommentRepository:
 
 
     # Lấy danh sách phản hồi của một bình luận =========================================================================
-    async def get_replies(self, root_id: str, limit: int = 10, cursor: Optional[str] = None) -> List[Dict[str, Any]]:
+    async def get_replies(self, root_id: str, limit: int = 50, cursor: Optional[str] = None) -> List[Dict[str, Any]]:
         query = {"root_id": ObjectId(root_id)}
         if cursor:
             query["_id"] = {"$gt": ObjectId(cursor)}

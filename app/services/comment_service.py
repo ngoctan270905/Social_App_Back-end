@@ -55,6 +55,9 @@ class CommentService:
 
             reply_to_comment_id_obj = ObjectId(data.reply_to_comment_id)
 
+            if reply_to_user_id_obj and str(reply_to_user_id_obj) == user_id:
+                reply_to_user_id_obj = None
+
             # nếu comment rep có root _id
             if parent_comment.get("root_id"):
                 root_id_obj = parent_comment["root_id"]
@@ -187,7 +190,7 @@ class CommentService:
             response.append(CommentResponse(
                 _id=str(c["_id"]),
                 # post_id=str(c["post_id"]),
-                # root_id=str(c["root_id"]) if c.get("root_id") else None,
+                root_id=str(c["root_id"]) if c.get("root_id") else None,
                 # reply_to_comment_id=str(c["reply_to_comment_id"]) if c.get("reply_to_comment_id") else None,
                 # reply_to_user_id=str(c["reply_to_user_id"]) if c.get("reply_to_user_id") else None,
                 content=c["content"],
@@ -199,7 +202,7 @@ class CommentService:
         return response
 
 
-    async def get_replies_for_comment_thread(self, root_comment_id: str, limit: int = 10,
+    async def get_replies_for_comment_thread(self, root_comment_id: str, limit: int = 50,
                                              cursor: Optional[str] = None) -> List[CommentReplyResponse]:
         print(f"đi vàoddaaay ")
         replies = await self.comment_repo.get_replies(root_comment_id, limit, cursor)

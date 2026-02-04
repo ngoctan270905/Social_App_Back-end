@@ -45,7 +45,7 @@ async def get_root_comments_for_post(
 )
 async def get_replies_for_comment_thread(
     root_comment_id: str,
-    limit: int = Query(default=10, le=100),
+    limit: int = Query(default=50, le=100),
     cursor: Optional[str] = Query(None),
     service: CommentService = Depends(get_comment_service)
 ):

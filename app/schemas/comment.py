@@ -31,7 +31,7 @@ class CommentCreateResponse(BaseModel):
 class CommentResponse(BaseModel):
     id: ObjectIdStr = Field(..., alias="_id", serialization_alias="id")
     # post_id: ObjectIdStr
-    # root_id: Optional[ObjectIdStr] = None
+    root_id: Optional[ObjectIdStr] = None
     # reply_to_comment_id: Optional[ObjectIdStr] = None
     # reply_to_user_id: Optional[ObjectIdStr] = None
     content: str
