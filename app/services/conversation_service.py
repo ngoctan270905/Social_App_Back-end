@@ -4,6 +4,7 @@ from typing import Optional, List, Dict, Any
 from bson import ObjectId
 from fastapi import HTTPException
 
+from app.core.config import settings
 from app.exceptions.post import ForbiddenError, NotFoundError
 from app.repositories.conversation_repository import ConversationRepository
 from app.repositories.media_repository import MediaRepository
@@ -81,7 +82,13 @@ class ConversationService:
 
                 if avatar_id:
                     media = media_map.get(avatar_id)
-                    avatar_url = media.get("url", "") if media else ""
+                    url = media.get("url", "") if media else ""
+
+                    if url:
+                        base = settings.SERVER_BASE_URL.rstrip("/")
+                        url = f"{base}/{url.lstrip('/')}"
+
+                    avatar_url = url
 
                 partner = ConversationPartner(
                     user_id=str(partner_id),
