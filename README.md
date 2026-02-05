@@ -61,7 +61,7 @@ Tạo một file `.env` tại thư mục gốc của dự án, dựa trên file 
 Để khởi động ứng dụng FastAPI bằng Uvicorn:
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --reload
 ```
 
 Tài liệu API sẽ có sẵn tại `http://localhost:8000/docs` (Swagger UI) hoặc `http://localhost:8000/redoc` (ReDoc).
