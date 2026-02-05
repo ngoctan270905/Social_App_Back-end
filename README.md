@@ -1,5 +1,3 @@
-# Facebook Clone Backend
-
 ## Giới thiệu Dự án
 
 Đây là hệ thống backend được phát triển bằng FastAPI, thiết kế để cung cấp năng lượng cho một nền tảng mạng xã hội tương tự Facebook. Dự án cung cấp một bộ API mạnh mẽ cho việc xác thực người dùng, quản lý hồ sơ, tạo bài đăng, bình luận, trò chuyện theo thời gian thực và thông báo.
