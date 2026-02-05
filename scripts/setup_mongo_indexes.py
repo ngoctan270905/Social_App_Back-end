@@ -2,10 +2,7 @@ import asyncio
 import logging
 import sys
 import os
-
-# Thêm thư mục gốc vào sys.path để import được app
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 import pymongo
 from app.core.config import settings
 from app.core.mongo_database import mongodb_client
@@ -61,12 +58,7 @@ async def create_indexes():
         await tokens_col.create_index("user_id")
         logger.info("  - Đã tạo index cho 'user_id'")
 
-        # TTL Index (Time To Live): Tự động xóa token khi hết hạn
-        # expireAfterSeconds=0 nghĩa là xóa ngay khi thời gian hiện tại > expires_at
-        # Lưu ý: Trường expires_at phải lưu dạng datetime object (UTC), không phải string/timestamp
-        # await tokens_col.create_index("expires_at", expireAfterSeconds=0)
-        # logger.info("  - Đã tạo TTL index cho 'expires_at' (Tự động xóa token hết hạn)")
-
+        # TTL Index (Time To Live): Tự động xóa token khi hết hạ
         # ==========================================
         # 4. Collection: posts
         # ==========================================
@@ -91,8 +83,8 @@ async def create_indexes():
         logger.info("Đang xử lý collection: media")
         media_col = db.get_collection("media")
 
-        # Unique Index cho public_id (Map với Cloudinary)
-        # Giúp tìm nhanh media trong DB nếu có webhook từ Cloudinary hoặc check trùng
+        # Unique Index cho public_id
+
         await media_col.create_index("public_id", unique=True, sparse=True)
         logger.info("  - Đã tạo unique sparse index cho 'public_id'")
 
