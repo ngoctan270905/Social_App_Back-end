@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     MAIL_SSL_TLS: bool = False
     MAIL_FROM_NAME: str = PROJECT_NAME
 
+    # Địa chỉ url back-end
+    SERVER_BASE_URL: str
+
     # Địa chỉ url front-end tạo link trong email
     CLIENT_BASE_URL: str
 
@@ -63,7 +66,7 @@ class Settings(BaseSettings):
     REDIS_DB: int
 
     # Cấu hình cài đặt Redis
-    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_ENABLED: bool = False
     RATE_LIMIT_DEFAULT: str = "100/minute"
     RATE_LIMIT_AUTH: str = "10/minute"
 

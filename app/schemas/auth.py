@@ -27,6 +27,7 @@ class UserMeResponse(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=50)
     email: EmailStr
     avatar: Optional[str] = None
+    cover: Optional[str] = None
     created_at: datetime
 
 # Định dạng dữ liệu xác minh email =====================================================================================

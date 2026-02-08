@@ -1,0 +1,124 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Dict, Optional
+from app.api import deps
+from app.api.deps import get_message_service, get_conversation_service
+from app.core.dependencies import get_current_user
+from app.schemas.conversation import ConversationResponse, ConversationFindOrCreate, ConversationListItem
+from app.schemas.message import MessageCreate, MessageResponse
+from app.schemas.response import ResponseModel
+from app.services.message_service import MessageService
+from app.repositories.message_repository import MessageRepository
+from app.services.conversation_service import ConversationService
+from app.repositories.conversation_repository import ConversationRepository
+
+router = APIRouter()
+
+# ======================================================================================================================
+@router.post("/",
+    response_model=ResponseModel[ConversationResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Tạo cuộc trò chuyện mới"
+)
+async def find_or_create_conversation(
+        *,
+        data: ConversationFindOrCreate,
+        current_user: dict = Depends(get_current_user),
+        service: ConversationService = Depends(get_conversation_service)
+):
+    conversation = await service.find_or_create_private_conversation(
+        user_id=str(current_user["_id"]),
+        target_user_id=data.target_user_id
+    )
+    return ResponseModel(data=conversation)
+
+
+# ======================================================================================================================
+@router.delete("/{conversation_id}",
+               status_code=status.HTTP_204_NO_CONTENT,
+               summary="Ẩn cuộc trò chuyện"
+)
+async def hide_conversation_for_oneself(
+        conversation_id: str,
+        current_user: dict = Depends(get_current_user),
+        service: ConversationService = Depends(get_conversation_service)
+):
+    deleted_at = await service.hide_conversation_for_user(
+        conversation_id=conversation_id,
+        user_id=str(current_user["_id"])
+    )
+
+
+# ======================================================================================================================
+@router.get("/{conversation_id}/messages",
+            status_code=status.HTTP_200_OK,
+            summary="Lấy danh sách tin nhắn"
+)
+async def get_messages(
+    *,
+    conversation_id: str,
+    current_user: dict = Depends(get_current_user),
+    message_service: MessageService = Depends(get_message_service),
+    cursor: Optional[str] = None,
+    limit: int = 15
+):
+    result = await message_service.get_messages(
+        conversation_id=conversation_id,
+        cursor=cursor,
+        limit=limit
+    )
+    return result
+
+
+# ======================================================================================================================
+@router.post("/{conversation_id}/messages",
+             response_model=ResponseModel[MessageResponse],
+             status_code=status.HTTP_201_CREATED,
+             summary="Gửi tin nhắn"
+)
+async def send_message(
+    conversation_id: str,
+    message_in: MessageCreate,
+    current_user: Dict = Depends(get_current_user),
+    message_service: MessageService = Depends(get_message_service)
+):
+    message = await message_service.send_message(
+        sender_id=current_user["_id"],
+        conversation_id=conversation_id,
+        data=message_in
+    )
+    return ResponseModel(data=message)
+
+
+# ======================================================================================================================
+@router.get("/",
+            response_model=ResponseModel[List[ConversationListItem]],
+            status_code=status.HTTP_200_OK,
+            summary="Danh sách đoạn chat"
+)
+async def get_conversations(
+    *,
+    current_user: dict = Depends(get_current_user),
+    conversation_service: ConversationService = Depends(get_conversation_service)
+):
+    conversations = await conversation_service.get_conversations_for_user(user_id=current_user["_id"])
+    return ResponseModel(data=conversations)
+
+
+# ======================================================================================================================
+@router.delete("/{conversation_id}/messages/{message_id}",
+               status_code=status.HTTP_204_NO_CONTENT,
+               summary="Xóa tin nhắn"
+               )
+async def delete_message(
+        conversation_id: str,
+        message_id: str,
+        current_user: dict = Depends(get_current_user),
+        message_service: MessageService = Depends(get_message_service)
+):
+    success = await message_service.delete_message(
+        conversation_id=conversation_id,
+        message_id=message_id,
+        user_id=str(current_user["_id"])
+    )
+
+

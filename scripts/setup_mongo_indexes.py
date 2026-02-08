@@ -2,10 +2,7 @@ import asyncio
 import logging
 import sys
 import os
-
-# Thêm thư mục gốc vào sys.path để import được app
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-
 import pymongo
 from app.core.config import settings
 from app.core.mongo_database import mongodb_client
@@ -61,11 +58,55 @@ async def create_indexes():
         await tokens_col.create_index("user_id")
         logger.info("  - Đã tạo index cho 'user_id'")
 
-        # TTL Index (Time To Live): Tự động xóa token khi hết hạn
-        # expireAfterSeconds=0 nghĩa là xóa ngay khi thời gian hiện tại > expires_at
-        # Lưu ý: Trường expires_at phải lưu dạng datetime object (UTC), không phải string/timestamp
-        # await tokens_col.create_index("expires_at", expireAfterSeconds=0)
-        # logger.info("  - Đã tạo TTL index cho 'expires_at' (Tự động xóa token hết hạn)")
+        # TTL Index (Time To Live): Tự động xóa token khi hết hạ
+        # ==========================================
+        # 4. Collection: posts
+        # ==========================================
+        logger.info("Đang xử lý collection: posts")
+        posts_col = db.get_collection("posts")
+
+        # Index cho trang cá nhân (Lấy bài viết của user, sắp xếp mới nhất)
+        await posts_col.create_index([("user_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index (user_id, created_at) cho trang cá nhân")
+
+        # Index cho News Feed public (Lấy bài public, sắp xếp mới nhất)
+        await posts_col.create_index([("privacy", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index (privacy, created_at) cho Public Feed")
+
+        # Text Index cho tìm kiếm nội dung bài viết
+        await posts_col.create_index([("content", pymongo.TEXT)])
+        logger.info("  - Đã tạo text index cho 'content' để tìm kiếm")
+
+        # ==========================================
+        # 5. Collection: media
+        # ==========================================
+        logger.info("Đang xử lý collection: media")
+        media_col = db.get_collection("media")
+
+        # Unique Index cho public_id
+
+        await media_col.create_index("public_id", unique=True, sparse=True)
+        logger.info("  - Đã tạo unique sparse index cho 'public_id'")
+
+        # Index cho created_at (Để quét và xóa file rác cũ)
+        await media_col.create_index([("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo index cho 'created_at'")
+
+        # ==========================================
+        # 6. Collection: comments
+        # ==========================================
+        logger.info("Đang xử lý collection: comments")
+        comments_col = db.get_collection("comments")
+
+        # Index 1: Lấy comment gốc của post
+        # Query: {post_id: <id>, root_id: null} sort by created_at DESC
+        await comments_col.create_index([("post_id", pymongo.ASCENDING), ("root_id", pymongo.ASCENDING), ("created_at", pymongo.DESCENDING)])
+        logger.info("  - Đã tạo compound index ({post_id: 1, root_id: 1, created_at: -1}) cho comment gốc")
+
+        # Index 2: Lấy replies của 1 comment (trong một luồng)
+        # Query: {root_id: <id>} sort by created_at ASC
+        await comments_col.create_index([("root_id", pymongo.ASCENDING), ("created_at", pymongo.ASCENDING)])
+        logger.info("  - Đã tạo compound index ({root_id: 1, created_at: 1}) cho replies trong luồng")
 
 
         logger.info("=" * 50)

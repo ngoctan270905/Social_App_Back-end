@@ -1,4 +1,4 @@
-import logging
+import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
@@ -6,8 +6,9 @@ from fastapi import FastAPI
 # from app.core.database import dispose_db
 from app.core.redis_client import get_redis_pool, close_redis_pool
 from .mongo_database import mongodb_client
+from loguru import logger
 
-logger = logging.getLogger(__name__)
+from .websocket import manager
 
 
 @asynccontextmanager
@@ -19,13 +20,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     try:
         # 1. Database
-        logger.info("Đang khởi tạo cơ sở dữ liệu...")
+        logger.info("Đang kết nối tới cơ sở dữ liệu...")
         # await test_db_connection()
         await mongodb_client.connect()
-        logger.info("Cơ sở dữ liệu đã được khởi tạo")
+        logger.info("Kết nối thành công!")
 
         # 2. Redis pool
-        logger.info("Đang khởi tạo Redis pool...")
+        logger.info("Đang kết nối tới Redis...")
         pool = await get_redis_pool()
 
         # Test connection
@@ -33,7 +34,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         client = redis.Redis(connection_pool=pool)
         await client.ping()
         await client.aclose()
-        logger.info("Redis pool đã được khởi tạo")
+        logger.info("Kết nối thành công")
+
+        asyncio.create_task(manager.start_listening_redis())
+        logger.info("Start Redis Pub/Sub listener")
 
         logger.info("=" * 50)
         logger.info("Khởi động ứng dụng hoàn tất")
@@ -51,7 +55,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("=" * 50)
 
     try:
-        # 1. Redis
+        # 1. Redis Listener
+        logger.info("Đang dừng Redis Listener...")
+        await manager.stop_listening_redis()
+        logger.info("Redis Listener đã dừng")
+
+        # 2. Redis Pool
         logger.info("Đang đóng Redis pool...")
         await close_redis_pool()
         logger.info("Redis pool đã được đóng")

@@ -129,7 +129,6 @@ class AuthService:
 
     # Logic gửi lại mã OTP =============================================================================================
     async def resend_verification_email(self, email: str, background_tasks: BackgroundTasks):
-        print(f"Đi vào đây")
         # 1. Kiểm tra user tồn tại
         user = await self.user_repo.get_by_email(email)
         if not user:
@@ -207,6 +206,7 @@ class AuthService:
             scope="password_reset",
             expires_in_minutes=10
         )
+        print(f"test {password_reset_token}")
 
         return {"reset_token": password_reset_token}
 
@@ -285,10 +285,10 @@ class AuthService:
         # Xác minh refresh token
         user_id = await self.token_service.verify_refresh_token(refresh_token)
 
-        # Thu hồi token (rotation)
+        # Thu hồi token
         await self.token_service.revoke_refresh_token(refresh_token)
 
-        # Get user dict
+        # lấy user
         user = await self.user_repo.get_by_id(user_id)
         if not user:
             raise UserInvalidForToken()
