@@ -68,3 +68,4 @@ public/media/
 *.flv
 *.wmv
 
+.vercel
