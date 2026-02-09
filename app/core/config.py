@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     # Cấu hình cài đặt Redis
     REDIS_HOST: str
     REDIS_PORT: int
+    REDIS_PASSWORD: str
     REDIS_DB: int
 
     # Cấu hình cài đặt Redis
