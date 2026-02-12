@@ -1,8 +1,5 @@
 from datetime import datetime
 from typing import Optional, Dict, Any, Coroutine
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete, update
-
 from app.core.mongo_database import mongodb_client
 import hashlib
 

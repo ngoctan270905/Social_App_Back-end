@@ -15,6 +15,7 @@ class MongoDBClient:
         if self.client is None:
             self.client = AsyncMongoClient(settings.MONGO_CONNECTION_STRING)
             self._database = self.client.get_database(settings.MONGO_DB_NAME)
+            await self.client.admin.command("ping")
             logger.info("Ket noi toi MongoDB thanh cong")
 
     # async close

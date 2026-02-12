@@ -1,6 +1,5 @@
 import uuid
 
-from alembic.command import heads
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from typing import Optional

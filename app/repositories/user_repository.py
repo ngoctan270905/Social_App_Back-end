@@ -1,6 +1,5 @@
 from typing import Optional, List, Dict, Any
 from bson import ObjectId
-from sqlalchemy import select
 import uuid
 from app.core.mongo_database import mongodb_client
 from app.schemas.auth import UserRegister
@@ -16,7 +15,6 @@ class UserRepository:
         user = await self.collection.find_one({"_id": ObjectId(user_id)})
         # print(f"test {user}")
         return user
-
 
 
     # Truy vấn DB tìm name user ========================================================================================

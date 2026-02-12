@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     # Cấu hình Mongo
     MONGO_CONNECTION_STRING: str
     MONGO_DB_NAME: str
+    MONGO_USER: str
+    MONGO_PASSWORD: str
 
     #Build URLs tự động
     @computed_field
